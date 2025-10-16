@@ -49,8 +49,12 @@ RUN npx prisma generate
 # Copy built application from builder
 COPY --from=builder /app/dist ./dist
 
+# Copy start script
+COPY start.sh ./
+RUN chmod +x start.sh
+
 # Expose port
 EXPOSE 3000
 
-# Run migrations and start application
-CMD ["sh", "-c", "npx prisma migrate deploy && echo 'Starting application...' && node dist/main"]
+# Run start script
+CMD ["./start.sh"]
