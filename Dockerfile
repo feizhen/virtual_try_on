@@ -41,8 +41,10 @@ COPY package.json pnpm-lock.yaml ./
 COPY prisma ./prisma/
 
 # Install all dependencies (need prisma CLI for generation)
-# Allow build scripts for bcrypt and prisma
-RUN pnpm install --frozen-lockfile
+# Enable build scripts for bcrypt and other native modules
+RUN pnpm config set enable-pre-post-scripts true && \
+    pnpm install --frozen-lockfile && \
+    pnpm rebuild bcrypt
 
 # Generate Prisma Client in production stage
 RUN npx prisma generate
