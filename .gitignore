@@ -48,8 +48,7 @@ lerna-debug.log*
 *~
 
 # Prisma
-prisma/migrations/*
-!prisma/migrations/.gitkeep
+# Note: Migrations should be committed for production deployments
 
 # Build
 build/
