@@ -2,14 +2,13 @@
 nixPkgs = ['nodejs-20_x']
 
 [phases.install]
-cmds = ['pnpm install']
-
-[phases.build]
 cmds = [
-  'pnpm run build',
-  'npx prisma generate',
-  'npx prisma migrate deploy'
+  'pnpm install --frozen-lockfile',
+  'npx prisma generate'
 ]
 
+[phases.build]
+cmds = ['pnpm run build']
+
 [start]
-cmd = 'pnpm run start:prod'
+cmd = 'npx prisma migrate deploy && pnpm run start:prod'
