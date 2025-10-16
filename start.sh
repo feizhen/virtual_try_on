@@ -1,8 +1,15 @@
 #!/bin/sh
-set -e
+set -ex
 
-echo "Running database migrations..."
+echo "===== Starting deployment script ====="
+echo "Node version: $(node --version)"
+echo "Current directory: $(pwd)"
+echo "Directory contents:"
+ls -la
+
+echo "===== Running database migrations ====="
 npx prisma migrate deploy
 
-echo "Starting application..."
+echo "===== Migrations complete ====="
+echo "===== Starting NestJS application ====="
 exec node dist/main
