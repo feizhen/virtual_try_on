@@ -28,8 +28,8 @@ RUN pnpm build
 # Production stage
 FROM node:20-alpine AS production
 
-# Install dependencies for Prisma and native modules
-RUN apk add --no-cache openssl python3 make g++
+# Install dependencies for Prisma runtime
+RUN apk add --no-cache openssl
 
 # Install pnpm
 RUN npm install -g pnpm
@@ -40,16 +40,8 @@ WORKDIR /app
 COPY package.json pnpm-lock.yaml ./
 COPY prisma ./prisma/
 
-# Install all dependencies (need prisma CLI for generation)
-# Enable build scripts for bcrypt and other native modules
-RUN pnpm config set enable-pre-post-scripts true && \
-    pnpm install --frozen-lockfile && \
-    pnpm rebuild bcrypt
-
-# Generate Prisma Client in production stage
-RUN npx prisma generate
-
-# Copy built application from builder
+# Copy node_modules and dist from builder (already has compiled bcrypt)
+COPY --from=builder /app/node_modules ./node_modules
 COPY --from=builder /app/dist ./dist
 
 # Copy start script
