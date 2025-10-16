@@ -1,8 +1,8 @@
 # Build stage
 FROM node:20-alpine AS builder
 
-# Install dependencies for Prisma
-RUN apk add --no-cache openssl
+# Install dependencies for Prisma and native modules (bcrypt)
+RUN apk add --no-cache openssl python3 make g++
 
 # Install pnpm
 RUN npm install -g pnpm
