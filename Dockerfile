@@ -28,8 +28,8 @@ RUN pnpm build
 # Production stage
 FROM node:20-alpine AS production
 
-# Install dependencies for Prisma
-RUN apk add --no-cache openssl
+# Install dependencies for Prisma and native modules
+RUN apk add --no-cache openssl python3 make g++
 
 # Install pnpm
 RUN npm install -g pnpm
@@ -41,6 +41,7 @@ COPY package.json pnpm-lock.yaml ./
 COPY prisma ./prisma/
 
 # Install all dependencies (need prisma CLI for generation)
+# Allow build scripts for bcrypt and prisma
 RUN pnpm install --frozen-lockfile
 
 # Generate Prisma Client in production stage
