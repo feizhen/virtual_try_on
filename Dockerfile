@@ -34,15 +34,17 @@ WORKDIR /app
 COPY package.json pnpm-lock.yaml ./
 COPY prisma ./prisma/
 
-# Install production dependencies only
-RUN pnpm install --prod --frozen-lockfile
+# Install all dependencies (need prisma CLI for generation)
+RUN pnpm install --frozen-lockfile
+
+# Generate Prisma Client in production stage
+RUN npx prisma generate
 
 # Copy built application from builder
 COPY --from=builder /app/dist ./dist
-COPY --from=builder /app/node_modules/.prisma ./node_modules/.prisma
 
 # Expose port
 EXPOSE 3000
 
-# Start application
-CMD ["pnpm", "start:prod"]
+# Run migrations and start application
+CMD ["sh", "-c", "npx prisma migrate deploy && pnpm start:prod"]
