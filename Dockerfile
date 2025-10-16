@@ -53,4 +53,4 @@ COPY --from=builder /app/dist ./dist
 EXPOSE 3000
 
 # Run migrations and start application
-CMD ["sh", "-c", "npx prisma migrate deploy && pnpm start:prod"]
+CMD ["sh", "-c", "npx prisma migrate deploy && echo 'Starting application...' && node dist/main"]
