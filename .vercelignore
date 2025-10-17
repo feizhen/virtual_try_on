@@ -16,3 +16,4 @@ start-dev.sh
 
 # 排除客户端的开发依赖
 client/node_modules/
+# Deployment trigger
