@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { useNavigate, Link, Navigate } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import './Auth.css';
 
@@ -11,10 +11,12 @@ export const Login: React.FC = () => {
   const navigate = useNavigate();
   const { login, isAuthenticated } = useAuth();
 
-  // 如果已登录,重定向到首页
-  if (isAuthenticated) {
-    return <Navigate to="/" replace />;
-  }
+  // 监听认证状态变化,登录成功后自动跳转
+  useEffect(() => {
+    if (isAuthenticated) {
+      navigate('/', { replace: true });
+    }
+  }, [isAuthenticated, navigate]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -23,7 +25,7 @@ export const Login: React.FC = () => {
 
     try {
       await login({ email, password });
-      navigate('/');
+      // 不需要手动跳转,isAuthenticated 变为 true 后会自动触发重定向
     } catch (err: any) {
       setError(err.response?.data?.message || '登录失败,请检查邮箱和密码');
     } finally {
