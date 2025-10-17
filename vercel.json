@@ -1,8 +1,8 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
-  "buildCommand": "cd client && corepack enable && corepack prepare pnpm@latest --activate && pnpm install && pnpm build",
+  "buildCommand": "npm install -g pnpm@9.15.4 && cd client && pnpm install && pnpm build",
   "outputDirectory": "client/dist",
-  "installCommand": "cd client && corepack enable && corepack prepare pnpm@latest --activate && pnpm install",
+  "installCommand": "npm install -g pnpm@9.15.4 && cd client && pnpm install",
   "framework": null,
   "rewrites": [
     {
