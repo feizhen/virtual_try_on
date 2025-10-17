@@ -1,6 +1,9 @@
 # Build stage
 FROM node:20-alpine AS builder
 
+# Install OpenSSL for Prisma
+RUN apk add --no-cache openssl
+
 # Install pnpm
 RUN npm install -g pnpm
 
@@ -27,6 +30,9 @@ RUN pnpm build
 
 # Production stage
 FROM node:20-alpine
+
+# Install OpenSSL for Prisma
+RUN apk add --no-cache openssl
 
 # Install pnpm
 RUN npm install -g pnpm
