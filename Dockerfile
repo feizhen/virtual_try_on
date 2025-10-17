@@ -4,8 +4,10 @@ FROM node:20-alpine AS builder
 # Install OpenSSL for Prisma
 RUN apk add --no-cache openssl
 
-# Install pnpm
-RUN npm install -g pnpm
+# Install pnpm and configure npm registry
+RUN npm config set registry https://registry.npmmirror.com && \
+    npm install -g pnpm && \
+    pnpm config set registry https://registry.npmmirror.com
 
 # Set working directory
 WORKDIR /app
@@ -34,8 +36,10 @@ FROM node:20-alpine
 # Install OpenSSL for Prisma
 RUN apk add --no-cache openssl
 
-# Install pnpm
-RUN npm install -g pnpm
+# Install pnpm and configure npm registry
+RUN npm config set registry https://registry.npmmirror.com && \
+    npm install -g pnpm && \
+    pnpm config set registry https://registry.npmmirror.com
 
 # Set working directory
 WORKDIR /app
