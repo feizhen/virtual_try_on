@@ -4,7 +4,7 @@ import { useAuth } from '../contexts/AuthContext';
 import './Auth.css';
 
 export const Register: React.FC = () => {
-  const [username, setUsername] = useState('');
+  const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -28,15 +28,15 @@ export const Register: React.FC = () => {
       return;
     }
 
-    if (password.length < 6) {
-      setError('密码长度至少为6位');
+    if (password.length < 8) {
+      setError('密码长度至少为8位,且需包含大小写字母和数字/特殊字符');
       return;
     }
 
     setLoading(true);
 
     try {
-      await register({ username, email, password });
+      await register({ name, email, password });
       navigate('/');
     } catch (err: any) {
       setError(
@@ -57,14 +57,14 @@ export const Register: React.FC = () => {
 
         <form onSubmit={handleSubmit} className="auth-form">
           <div className="form-group">
-            <label htmlFor="username">用户名</label>
+            <label htmlFor="name">姓名</label>
             <input
-              id="username"
+              id="name"
               type="text"
-              value={username}
-              onChange={(e) => setUsername(e.target.value)}
+              value={name}
+              onChange={(e) => setName(e.target.value)}
               required
-              placeholder="请输入用户名"
+              placeholder="请输入姓名"
               disabled={loading}
             />
           </div>
@@ -90,7 +90,7 @@ export const Register: React.FC = () => {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
-              placeholder="请输入密码(至少6位)"
+              placeholder="请输入密码(至少8位,含大小写字母和数字)"
               disabled={loading}
             />
           </div>
