@@ -1,5 +1,10 @@
 # 部署指南
 
+## 🚀 在线访问
+
+- **前端**: https://vibe-coding-template-nestjsbackup.vercel.app
+- **后端**: https://web-production-8c703.up.railway.app
+
 ## 后端部署 (Railway)
 
 后端已部署到 Railway: https://web-production-8c703.up.railway.app
@@ -17,7 +22,7 @@ JWT_SECRET=your-jwt-secret
 JWT_EXPIRES_IN=7d
 
 # 前端 URL (用于 CORS)
-FRONTEND_URL=https://your-frontend.vercel.app
+FRONTEND_URL=https://vibe-coding-template-nestjsbackup.vercel.app
 
 # OAuth (可选)
 GOOGLE_CLIENT_ID=
