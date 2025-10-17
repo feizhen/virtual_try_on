@@ -35,16 +35,17 @@ vibe_coding_template_nestjs/
 │   ├── .env                   # 环境变量
 │   ├── vite.config.ts        # Vite 配置
 │   └── package.json
-└── src/                       # NestJS 后端 (已有)
+└── server/                    # NestJS 后端
 ```
 
 ## 快速开始
 
 ### 1. 启动后端服务
 
-在项目根目录:
+在 `server/` 目录:
 
 ```bash
+cd server
 pnpm start:dev
 ```
 
@@ -133,7 +134,7 @@ pnpm dev
 VITE_API_URL=http://localhost:3000
 ```
 
-### 后端 (.env) - 已配置
+### 后端 (server/.env) - 已配置
 
 - 数据库连接
 - JWT 密钥

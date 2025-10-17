@@ -6,15 +6,15 @@ echo "🚀 启动开发环境..."
 echo ""
 
 # 检查是否在项目根目录
-if [ ! -f "package.json" ]; then
+if [ ! -d "server" ] || [ ! -d "client" ]; then
   echo "❌ 错误: 请在项目根目录运行此脚本"
   exit 1
 fi
 
 # 检查依赖是否已安装
-if [ ! -d "node_modules" ]; then
+if [ ! -d "server/node_modules" ]; then
   echo "📦 安装后端依赖..."
-  pnpm install
+  cd server && pnpm install && cd ..
 fi
 
 if [ ! -d "client/node_modules" ]; then
@@ -37,7 +37,7 @@ echo ""
 trap 'kill $(jobs -p) 2>/dev/null' EXIT
 
 # 在后台启动后端
-pnpm start:dev &
+cd server && pnpm start:dev &
 
 # 等待后端启动
 sleep 3
