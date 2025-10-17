@@ -40,11 +40,14 @@ COPY server/package.json server/pnpm-lock.yaml ./
 # Copy prisma schema for client generation
 COPY server/prisma ./prisma
 
-# Install production dependencies (includes prisma client)
-RUN pnpm install --frozen-lockfile --prod
+# Install all dependencies first to run prisma generate
+RUN pnpm install --frozen-lockfile
 
 # Generate Prisma client
 RUN pnpm prisma:generate
+
+# Remove devDependencies
+RUN pnpm prune --prod
 
 # Copy built application from builder
 COPY --from=builder /app/dist ./dist
