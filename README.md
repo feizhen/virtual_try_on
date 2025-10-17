@@ -163,15 +163,21 @@ VITE_API_URL=http://localhost:3000
 - `GET /health` - 应用健康检查
 - `GET /health/db` - 数据库健康检查
 
-## 部署到Railway
+## 部署
 
-### 自动部署
+本项目采用前后端分离部署:
+- **后端**: Railway (已配置)
+- **前端**: Vercel (推荐)
+
+### 后端部署 (Railway)
+
+#### 自动部署
 
 1. 连接GitHub仓库到Railway
 2. 配置环境变量(参考 `server/.env.example`)
 3. Railway会自动检测 `railway.json` 并构建部署
 
-### 环境变量配置
+#### 环境变量配置
 
 在Railway项目设置中添加:
 - `DATABASE_URL` (Railway PostgreSQL自动提供)
@@ -180,9 +186,71 @@ VITE_API_URL=http://localhost:3000
 - `GOOGLE_CLIENT_ID`
 - `GOOGLE_CLIENT_SECRET`
 - `GOOGLE_CALLBACK_URL`
-- `FRONTEND_URL`
+- `FRONTEND_URL` (设置为Vercel部署的URL)
 
 详细步骤: [server/RAILWAY_ENV_SETUP.md](./server/RAILWAY_ENV_SETUP.md)
+
+### 前端部署 (Vercel)
+
+#### 快速部署
+
+1. **准备工作**
+   ```bash
+   # 确保代码已推送到GitHub
+   git push origin main
+   ```
+
+2. **在Vercel创建项目**
+   - 访问 [vercel.com](https://vercel.com)
+   - 点击 "Import Project"
+   - 选择你的GitHub仓库
+
+3. **配置构建设置**
+   - **Framework Preset**: 选择 "Other" 或 "Vite"
+   - **Root Directory**: 留空(项目根目录)
+   - **Build Command**: `cd client && pnpm install && pnpm build`
+   - **Output Directory**: `client/dist`
+   - **Install Command**: `cd client && pnpm install`
+
+4. **配置环境变量**
+   在Vercel项目设置中添加:
+   ```
+   VITE_API_URL=https://your-backend.railway.app
+   ```
+   将 `your-backend.railway.app` 替换为你的Railway后端URL
+
+5. **部署**
+   - 点击 "Deploy"
+   - 等待构建完成
+   - 获取Vercel部署URL
+
+6. **更新Railway后端配置**
+   在Railway中添加环境变量:
+   ```
+   FRONTEND_URL=https://your-frontend.vercel.app
+   ```
+
+#### 本地测试生产构建
+
+```bash
+cd client
+pnpm build
+pnpm preview
+```
+
+访问 http://localhost:4173 查看生产构建效果
+
+### 验证部署
+
+1. **检查后端**
+   ```bash
+   curl https://your-backend.railway.app/health
+   ```
+
+2. **检查前端**
+   - 访问 Vercel URL
+   - 测试登录/注册功能
+   - 检查浏览器控制台无CORS错误
 
 ## 开发命令
 
