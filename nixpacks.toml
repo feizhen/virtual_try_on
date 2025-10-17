@@ -1,8 +1,9 @@
 [phases.setup]
-nixPkgs = ["nodejs_20", "pnpm"]
+nixPkgs = ["nodejs_20"]
+aptPkgs = []
 
 [phases.install]
-cmds = ["cd server && pnpm install"]
+cmds = ["npm install -g pnpm", "cd server && pnpm install"]
 
 [phases.build]
 cmds = ["cd server && pnpm prisma:generate && pnpm build"]
