@@ -5,7 +5,7 @@ const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
 
 // 创建axios实例
 export const apiClient = axios.create({
-  baseURL: API_URL,
+  baseURL: `${API_URL}/api`,
   headers: {
     'Content-Type': 'application/json',
   },
@@ -40,7 +40,7 @@ apiClient.interceptors.response.use(
       try {
         const refreshToken = tokenManager.getRefreshToken();
         if (refreshToken) {
-          const response = await axios.post(`${API_URL}/auth/refresh`, {
+          const response = await axios.post(`${API_URL}/api/auth/refresh`, {
             refreshToken,
           });
 
