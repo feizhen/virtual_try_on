@@ -56,3 +56,19 @@ lerna-debug.log*
 
 # Build
 build/
+
+# Uploads (local file storage for outfit change feature)
+server/uploads/
+uploads/
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+*.egg-info/
+dist/
+build/
+venv/
+env/

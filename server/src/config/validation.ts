@@ -35,15 +35,6 @@ class EnvironmentVariables {
   @IsString()
   JWT_REFRESH_EXPIRES_IN: string;
 
-  @IsString()
-  GOOGLE_CLIENT_ID: string;
-
-  @IsString()
-  GOOGLE_CLIENT_SECRET: string;
-
-  @IsUrl({ require_tld: false })
-  GOOGLE_CALLBACK_URL: string;
-
   @IsUrl({ require_tld: false })
   FRONTEND_URL: string;
 }

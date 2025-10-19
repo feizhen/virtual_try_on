@@ -4,14 +4,9 @@ import {
   Body,
   Get,
   UseGuards,
-  Req,
-  Res,
   HttpCode,
   HttpStatus,
 } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
-import { AuthGuard } from '@nestjs/passport';
-import { Request, Response } from 'express';
 import { AuthService } from './auth.service';
 import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
@@ -27,7 +22,6 @@ export class AuthController {
   constructor(
     private readonly authService: AuthService,
     private readonly usersService: UsersService,
-    private readonly configService: ConfigService,
   ) {}
 
   @Public()
@@ -41,25 +35,6 @@ export class AuthController {
   @HttpCode(HttpStatus.OK)
   async login(@Body() loginDto: LoginDto): Promise<AuthResponseDto> {
     return this.authService.login(loginDto);
-  }
-
-  @Public()
-  @Get('google')
-  @UseGuards(AuthGuard('google'))
-  async googleAuth() {
-    // Initiates Google OAuth flow
-  }
-
-  @Public()
-  @Get('google/callback')
-  @UseGuards(AuthGuard('google'))
-  async googleAuthCallback(@Req() req: Request, @Res() res: Response) {
-    const authResponse = await this.authService.googleLogin(req.user);
-
-    const frontendUrl = this.configService.get<string>('frontend.url');
-    const redirectUrl = `${frontendUrl}/auth/callback?token=${authResponse.accessToken}&refresh=${authResponse.refreshToken}`;
-
-    res.redirect(redirectUrl);
   }
 
   @Public()

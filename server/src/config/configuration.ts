@@ -14,12 +14,15 @@ export default () => ({
     refreshSecret: process.env.JWT_REFRESH_SECRET,
     refreshExpiresIn: process.env.JWT_REFRESH_EXPIRES_IN || '30d',
   },
-  google: {
-    clientId: process.env.GOOGLE_CLIENT_ID,
-    clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-    callbackUrl: process.env.GOOGLE_CALLBACK_URL,
-  },
   frontend: {
     url: process.env.FRONTEND_URL || 'http://localhost:5173',
+  },
+  gemini: {
+    apiKey: process.env.GEMINI_API_KEY,
+    baseUrl:
+      process.env.GEMINI_API_BASE_URL ||
+      'https://generativelanguage.googleapis.com',
+    model: process.env.GEMINI_MODEL || 'gemini-2.5-flash-image-preview',
+    timeout: parseInt(process.env.GEMINI_TIMEOUT || '60', 10),
   },
 });
