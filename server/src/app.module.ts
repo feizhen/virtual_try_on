@@ -12,6 +12,7 @@ import { AllExceptionsFilter } from './common/filters/http-exception.filter';
 import { TransformInterceptor } from './common/interceptors/transform.interceptor';
 import { LoggingInterceptor } from './common/interceptors/logging.interceptor';
 import { ValidationPipe } from './common/pipes/validation.pipe';
+import { OutfitChangeModule } from './modules/outfit-change/outfit-change.module';
 
 @Module({
   imports: [
@@ -25,6 +26,7 @@ import { ValidationPipe } from './common/pipes/validation.pipe';
     AuthModule,
     UsersModule,
     HealthModule,
+    OutfitChangeModule,
   ],
   providers: [
     {

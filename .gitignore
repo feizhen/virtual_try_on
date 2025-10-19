@@ -56,3 +56,7 @@ lerna-debug.log*
 
 # Build
 build/
+
+# Uploads (local file storage for outfit change feature)
+server/uploads/
+uploads/

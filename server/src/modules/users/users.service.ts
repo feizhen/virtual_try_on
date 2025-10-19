@@ -64,12 +64,6 @@ export class UsersService {
     });
   }
 
-  async findByGoogleId(googleId: string) {
-    return this.prisma.user.findUnique({
-      where: { googleId },
-    });
-  }
-
   async update(id: string, updateUserDto: UpdateUserDto): Promise<UserEntity> {
     const user = await this.prisma.user.findUnique({
       where: { id },

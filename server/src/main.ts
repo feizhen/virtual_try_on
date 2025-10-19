@@ -4,17 +4,24 @@ import { Logger } from '@nestjs/common';
 import helmet from 'helmet';
 import compression from 'compression';
 import { AppModule } from './app.module';
+import { NestExpressApplication } from '@nestjs/platform-express';
+import { join } from 'path';
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule, {
+  const app = await NestFactory.create<NestExpressApplication>(AppModule, {
     logger: ['error', 'warn', 'log', 'debug', 'verbose'],
   });
 
   const configService = app.get(ConfigService);
   const logger = new Logger('Bootstrap');
 
-  // Security
-  app.use(helmet());
+  // Security - Configure helmet to allow static assets
+  app.use(
+    helmet({
+      crossOriginResourcePolicy: { policy: 'cross-origin' }, // Allow cross-origin resource loading
+      contentSecurityPolicy: false, // Disable CSP for now (can be configured more granularly later)
+    }),
+  );
   app.use(compression());
 
   // CORS - 支持多个前端域名
@@ -44,6 +51,13 @@ async function bootstrap() {
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization'],
   });
+
+  // Serve static files from uploads directory
+  const uploadDir = configService.get<string>('UPLOAD_DIR') || 'uploads';
+  app.useStaticAssets(join(process.cwd(), uploadDir), {
+    prefix: `/${uploadDir}`,
+  });
+  logger.log(`Static files served from: /${uploadDir}`);
 
   // Global prefix
   app.setGlobalPrefix('api', {

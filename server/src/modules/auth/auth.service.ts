@@ -58,7 +58,7 @@ export class AuthService {
 
     if (!user.password) {
       throw new BadRequestException(
-        'This account uses OAuth login. Please login with Google.',
+        'This account has no password set. Please contact support.',
       );
     }
 
@@ -70,45 +70,6 @@ export class AuthService {
 
     if (!user.isActive) {
       throw new UnauthorizedException('Account is deactivated');
-    }
-
-    await this.usersService.updateLastLogin(user.id);
-
-    const tokens = await this.generateTokens(user.id, user.email);
-    await this.saveRefreshToken(user.id, tokens.refreshToken);
-
-    return new AuthResponseDto(new UserEntity(user), tokens.accessToken, tokens.refreshToken);
-  }
-
-  async googleLogin(googleUser: any): Promise<AuthResponseDto> {
-    let user = await this.usersService.findByGoogleId(googleUser.googleId);
-
-    if (!user) {
-      user = await this.usersService.findByEmail(googleUser.email);
-
-      if (user) {
-        user = await this.prisma.user.update({
-          where: { id: user.id },
-          data: {
-            googleId: googleUser.googleId,
-            provider: 'google',
-            emailVerified: googleUser.emailVerified,
-            avatar: googleUser.avatar || user.avatar,
-            name: googleUser.name || user.name,
-          },
-        });
-      } else {
-        user = await this.prisma.user.create({
-          data: {
-            email: googleUser.email,
-            googleId: googleUser.googleId,
-            name: googleUser.name,
-            avatar: googleUser.avatar,
-            provider: 'google',
-            emailVerified: googleUser.emailVerified,
-          },
-        });
-      }
     }
 
     await this.usersService.updateLastLogin(user.id);
