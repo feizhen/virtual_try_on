@@ -1,8 +1,12 @@
 # Build stage
 FROM node:20-alpine AS builder
 
-# Install OpenSSL for Prisma
-RUN apk add --no-cache openssl
+# Install OpenSSL and other dependencies for Prisma
+RUN apk add --no-cache openssl openssl-dev
+
+# Configure Prisma to use China mirror
+ENV PRISMA_ENGINES_MIRROR=https://registry.npmmirror.com/-/binary/prisma \
+    PRISMA_BINARIES_MIRROR=https://registry.npmmirror.com/-/binary/prisma
 
 # Install pnpm and configure npm registry
 RUN npm config set registry https://registry.npmmirror.com && \
@@ -33,8 +37,12 @@ RUN pnpm build
 # Production stage
 FROM node:20-alpine
 
-# Install OpenSSL for Prisma
-RUN apk add --no-cache openssl
+# Install OpenSSL and other dependencies for Prisma
+RUN apk add --no-cache openssl openssl-dev
+
+# Configure Prisma to use China mirror
+ENV PRISMA_ENGINES_MIRROR=https://registry.npmmirror.com/-/binary/prisma \
+    PRISMA_BINARIES_MIRROR=https://registry.npmmirror.com/-/binary/prisma
 
 # Install pnpm and configure npm registry
 RUN npm config set registry https://registry.npmmirror.com && \
