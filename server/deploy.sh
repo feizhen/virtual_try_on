@@ -36,7 +36,9 @@ if [ ! -f "docker-compose.prod.yml" ]; then
 fi
 
 # Load environment variables
-export $(cat .env.production | grep -v '^#' | xargs)
+set -a
+source .env.production.local 2>/dev/null || source .env.production
+set +a
 
 # Stop existing containers
 echo "🛑 Stopping existing containers..."
