@@ -4,8 +4,12 @@ FROM docker.m.daocloud.io/library/node:20-alpine AS builder
 # Use Aliyun mirror for apk packages
 RUN sed -i 's/dl-cdn.alpinelinux.org/mirrors.aliyun.com/g' /etc/apk/repositories
 
-# Install dependencies for native modules
-RUN apk add --no-cache python3 make g++
+# Install dependencies for native modules and Prisma
+RUN apk add --no-cache python3 make g++ openssl openssl-dev libc6-compat
+
+# Configure Prisma to use China mirror
+ENV PRISMA_ENGINES_MIRROR=https://registry.npmmirror.com/-/binary/prisma \
+    PRISMA_BINARIES_MIRROR=https://registry.npmmirror.com/-/binary/prisma
 
 WORKDIR /app
 
@@ -14,19 +18,23 @@ COPY package.json pnpm-lock.yaml ./
 
 # Install pnpm with Taobao mirror
 RUN npm config set registry https://registry.npmmirror.com && \
-    npm install -g pnpm
+    npm install -g pnpm@9
 
 # Configure pnpm to use Taobao mirror
 RUN pnpm config set registry https://registry.npmmirror.com
 
 # Install dependencies
-RUN pnpm install --frozen-lockfile
+RUN PRISMA_ENGINES_MIRROR=https://registry.npmmirror.com/-/binary/prisma \
+    PRISMA_BINARIES_MIRROR=https://registry.npmmirror.com/-/binary/prisma \
+    pnpm install --frozen-lockfile
 
 # Copy source code
 COPY . .
 
 # Generate Prisma Client
-RUN npx prisma generate
+RUN PRISMA_ENGINES_MIRROR=https://registry.npmmirror.com/-/binary/prisma \
+    PRISMA_BINARIES_MIRROR=https://registry.npmmirror.com/-/binary/prisma \
+    npx prisma generate
 
 # Build application
 RUN pnpm run build
@@ -37,7 +45,7 @@ FROM docker.m.daocloud.io/library/node:20-alpine
 # Use Aliyun mirror for apk packages
 RUN sed -i 's/dl-cdn.alpinelinux.org/mirrors.aliyun.com/g' /etc/apk/repositories
 
-# Install dependencies for sharp and other native modules
+# Install dependencies for sharp, native modules and Prisma
 RUN apk add --no-cache \
     python3 \
     make \
@@ -45,27 +53,42 @@ RUN apk add --no-cache \
     cairo-dev \
     jpeg-dev \
     pango-dev \
-    giflib-dev
+    giflib-dev \
+    openssl \
+    openssl-dev \
+    libc6-compat
+
+# Configure Prisma to use China mirror
+ENV PRISMA_ENGINES_MIRROR=https://registry.npmmirror.com/-/binary/prisma \
+    PRISMA_BINARIES_MIRROR=https://registry.npmmirror.com/-/binary/prisma
 
 WORKDIR /app
 
 # Copy package files
 COPY package.json pnpm-lock.yaml ./
 
+# Copy prisma schema
+COPY prisma ./prisma
+
 # Install pnpm with Taobao mirror
 RUN npm config set registry https://registry.npmmirror.com && \
-    npm install -g pnpm
+    npm install -g pnpm@9
 
 # Configure pnpm to use Taobao mirror
 RUN pnpm config set registry https://registry.npmmirror.com
 
-# Install production dependencies only
-RUN pnpm install --prod --frozen-lockfile
+# Install production dependencies only (now includes prisma)
+RUN PRISMA_ENGINES_MIRROR=https://registry.npmmirror.com/-/binary/prisma \
+    PRISMA_BINARIES_MIRROR=https://registry.npmmirror.com/-/binary/prisma \
+    pnpm install --prod --frozen-lockfile
+
+# Generate Prisma Client
+RUN PRISMA_ENGINES_MIRROR=https://registry.npmmirror.com/-/binary/prisma \
+    PRISMA_BINARIES_MIRROR=https://registry.npmmirror.com/-/binary/prisma \
+    npx prisma generate
 
 # Copy built application from builder
 COPY --from=builder /app/dist ./dist
-COPY --from=builder /app/node_modules/.prisma ./node_modules/.prisma
-COPY --from=builder /app/prisma ./prisma
 
 # Create uploads directory
 RUN mkdir -p /app/uploads
