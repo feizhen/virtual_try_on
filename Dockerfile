@@ -59,21 +59,17 @@ WORKDIR /app
 # Copy package files
 COPY server/package.json server/pnpm-lock.yaml ./
 
-# Copy prisma schema for client generation
+# Install production dependencies only
+RUN PRISMA_ENGINES_MIRROR=https://registry.npmmirror.com/-/binary/prisma \
+    PRISMA_BINARIES_MIRROR=https://registry.npmmirror.com/-/binary/prisma \
+    pnpm install --prod --frozen-lockfile
+
+# Copy prisma schema
 COPY server/prisma ./prisma
 
-# Install all dependencies first to run prisma generate
-RUN PRISMA_ENGINES_MIRROR=https://registry.npmmirror.com/-/binary/prisma \
-    PRISMA_BINARIES_MIRROR=https://registry.npmmirror.com/-/binary/prisma \
-    pnpm install --frozen-lockfile
-
-# Generate Prisma client with mirror configured
-RUN PRISMA_ENGINES_MIRROR=https://registry.npmmirror.com/-/binary/prisma \
-    PRISMA_BINARIES_MIRROR=https://registry.npmmirror.com/-/binary/prisma \
-    pnpm prisma:generate
-
-# Remove devDependencies
-RUN pnpm prune --prod
+# Copy generated Prisma Client from builder
+COPY --from=builder /app/node_modules/.prisma ./node_modules/.prisma
+COPY --from=builder /app/node_modules/@prisma ./node_modules/@prisma
 
 # Copy built application from builder
 COPY --from=builder /app/dist ./dist
