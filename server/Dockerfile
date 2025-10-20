@@ -1,5 +1,8 @@
 # Multi-stage build for production
-FROM node:20-alpine AS builder
+FROM docker.m.daocloud.io/library/node:20-alpine AS builder
+
+# Use Aliyun mirror for apk packages
+RUN sed -i 's/dl-cdn.alpinelinux.org/mirrors.aliyun.com/g' /etc/apk/repositories
 
 # Install dependencies for native modules
 RUN apk add --no-cache python3 make g++
@@ -9,8 +12,12 @@ WORKDIR /app
 # Copy package files
 COPY package.json pnpm-lock.yaml ./
 
-# Install pnpm
-RUN npm install -g pnpm
+# Install pnpm with Taobao mirror
+RUN npm config set registry https://registry.npmmirror.com && \
+    npm install -g pnpm
+
+# Configure pnpm to use Taobao mirror
+RUN pnpm config set registry https://registry.npmmirror.com
 
 # Install dependencies
 RUN pnpm install --frozen-lockfile
@@ -25,7 +32,10 @@ RUN npx prisma generate
 RUN pnpm run build
 
 # Production stage
-FROM node:20-alpine
+FROM docker.m.daocloud.io/library/node:20-alpine
+
+# Use Aliyun mirror for apk packages
+RUN sed -i 's/dl-cdn.alpinelinux.org/mirrors.aliyun.com/g' /etc/apk/repositories
 
 # Install dependencies for sharp and other native modules
 RUN apk add --no-cache \
@@ -42,8 +52,12 @@ WORKDIR /app
 # Copy package files
 COPY package.json pnpm-lock.yaml ./
 
-# Install pnpm
-RUN npm install -g pnpm
+# Install pnpm with Taobao mirror
+RUN npm config set registry https://registry.npmmirror.com && \
+    npm install -g pnpm
+
+# Configure pnpm to use Taobao mirror
+RUN pnpm config set registry https://registry.npmmirror.com
 
 # Install production dependencies only
 RUN pnpm install --prod --frozen-lockfile
