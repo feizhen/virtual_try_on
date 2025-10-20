@@ -56,23 +56,23 @@ RUN npm config set registry https://registry.npmmirror.com && \
 # Set working directory
 WORKDIR /app
 
+# Copy built application from builder first
+COPY --from=builder /app/dist ./dist
+
 # Copy package files
 COPY server/package.json server/pnpm-lock.yaml ./
-
-# Install production dependencies only
-RUN PRISMA_ENGINES_MIRROR=https://registry.npmmirror.com/-/binary/prisma \
-    PRISMA_BINARIES_MIRROR=https://registry.npmmirror.com/-/binary/prisma \
-    pnpm install --prod --frozen-lockfile
 
 # Copy prisma schema
 COPY server/prisma ./prisma
 
-# Copy generated Prisma Client from builder
-COPY --from=builder /app/node_modules/.prisma ./node_modules/.prisma
-COPY --from=builder /app/node_modules/@prisma ./node_modules/@prisma
+# Install production dependencies only (without Prisma binaries download)
+RUN PRISMA_ENGINES_MIRROR=https://registry.npmmirror.com/-/binary/prisma \
+    PRISMA_BINARIES_MIRROR=https://registry.nppmirror.com/-/binary/prisma \
+    pnpm install --prod --frozen-lockfile
 
-# Copy built application from builder
-COPY --from=builder /app/dist ./dist
+# Copy generated Prisma Client and engines from builder (this overwrites what was installed)
+COPY --from=builder /app/node_modules/.prisma ./node_modules/.prisma
+COPY --from=builder /app/node_modules/@prisma/client ./node_modules/@prisma/client
 
 # Expose port
 EXPOSE 3000
