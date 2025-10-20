@@ -2,9 +2,9 @@
 FROM node:20-alpine AS builder
 
 # Install OpenSSL and other dependencies for Prisma
-RUN apk add --no-cache openssl openssl-dev
+RUN apk add --no-cache openssl openssl-dev libc6-compat
 
-# Configure Prisma to use China mirror
+# Configure Prisma to use China mirror - set before any npm/pnpm operations
 ENV PRISMA_ENGINES_MIRROR=https://registry.npmmirror.com/-/binary/prisma \
     PRISMA_BINARIES_MIRROR=https://registry.npmmirror.com/-/binary/prisma
 
@@ -19,8 +19,10 @@ WORKDIR /app
 # Copy server package files
 COPY server/package.json server/pnpm-lock.yaml ./
 
-# Install dependencies
-RUN pnpm install --frozen-lockfile
+# Install dependencies with Prisma mirror configured
+RUN PRISMA_ENGINES_MIRROR=https://registry.npmmirror.com/-/binary/prisma \
+    PRISMA_BINARIES_MIRROR=https://registry.npmmirror.com/-/binary/prisma \
+    pnpm install --frozen-lockfile
 
 # Copy server source code
 COPY server/prisma ./prisma
@@ -28,8 +30,10 @@ COPY server/src ./src
 COPY server/tsconfig*.json ./
 COPY server/nest-cli.json ./
 
-# Generate Prisma Client
-RUN pnpm prisma:generate
+# Generate Prisma Client with mirror configured
+RUN PRISMA_ENGINES_MIRROR=https://registry.nppmirror.com/-/binary/prisma \
+    PRISMA_BINARIES_MIRROR=https://registry.npmmirror.com/-/binary/prisma \
+    pnpm prisma:generate
 
 # Build application
 RUN pnpm build
@@ -38,7 +42,7 @@ RUN pnpm build
 FROM node:20-alpine
 
 # Install OpenSSL and other dependencies for Prisma
-RUN apk add --no-cache openssl openssl-dev
+RUN apk add --no-cache openssl openssl-dev libc6-compat
 
 # Configure Prisma to use China mirror
 ENV PRISMA_ENGINES_MIRROR=https://registry.npmmirror.com/-/binary/prisma \
@@ -59,10 +63,14 @@ COPY server/package.json server/pnpm-lock.yaml ./
 COPY server/prisma ./prisma
 
 # Install all dependencies first to run prisma generate
-RUN pnpm install --frozen-lockfile
+RUN PRISMA_ENGINES_MIRROR=https://registry.npmmirror.com/-/binary/prisma \
+    PRISMA_BINARIES_MIRROR=https://registry.npmmirror.com/-/binary/prisma \
+    pnpm install --frozen-lockfile
 
-# Generate Prisma client
-RUN pnpm prisma:generate
+# Generate Prisma client with mirror configured
+RUN PRISMA_ENGINES_MIRROR=https://registry.npmmirror.com/-/binary/prisma \
+    PRISMA_BINARIES_MIRROR=https://registry.npmmirror.com/-/binary/prisma \
+    pnpm prisma:generate
 
 # Remove devDependencies
 RUN pnpm prune --prod
