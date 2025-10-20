@@ -10,7 +10,7 @@ ENV PRISMA_ENGINES_MIRROR=https://registry.npmmirror.com/-/binary/prisma \
 
 # Install pnpm and configure npm registry
 RUN npm config set registry https://registry.npmmirror.com && \
-    npm install -g pnpm && \
+    npm install -g pnpm@7.33.7 && \
     pnpm config set registry https://registry.npmmirror.com
 
 # Set working directory
@@ -50,7 +50,7 @@ ENV PRISMA_ENGINES_MIRROR=https://registry.npmmirror.com/-/binary/prisma \
 
 # Install pnpm and configure npm registry
 RUN npm config set registry https://registry.npmmirror.com && \
-    npm install -g pnpm && \
+    npm install -g pnpm@7.33.7 && \
     pnpm config set registry https://registry.npmmirror.com
 
 # Set working directory
