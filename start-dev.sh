@@ -25,6 +25,15 @@ fi
 echo ""
 echo "✅ 依赖检查完成"
 echo ""
+
+# 初始化数据库
+echo "🗄️  检查数据库状态..."
+cd server
+npx prisma migrate deploy 2>/dev/null || echo "⚠️  数据库迁移失败或无需迁移"
+npx prisma generate 2>/dev/null || echo "⚠️  Prisma Client 生成失败"
+cd ..
+
+echo ""
 echo "🔧 启动服务..."
 echo ""
 echo "后端运行在: http://localhost:3000"

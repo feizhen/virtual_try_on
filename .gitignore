@@ -42,7 +42,7 @@ lerna-debug.log*
 .env
 .env.local
 .env.development
-.env.production
+.env.production.local
 .env.prod
 .env.*.local
 
@@ -72,3 +72,15 @@ dist/
 build/
 venv/
 env/
+
+# Docker
+docker-compose.override.yml
+
+# Deployment logs
+server/logs/
+/var/log/virtual-try-on*.log
+
+# Database backups
+*.sql
+*.sql.gz
+server/backup*.sql
