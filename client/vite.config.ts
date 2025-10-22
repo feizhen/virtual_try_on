@@ -1,10 +1,18 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
+import { resolve } from 'path'
 
 // https://vite.dev/config/
 // Vite configuration for production build
 export default defineConfig({
   plugins: [react()],
+
+  // 路径别名配置
+  resolve: {
+    alias: {
+      '@': resolve(__dirname, './src'),
+    },
+  },
 
   // 开发服务器配置
   server: {

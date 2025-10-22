@@ -1,0 +1,423 @@
+/**
+ * 虚拟试衣组件共享样式
+ * 基于设计图的视觉规范
+ */
+
+/* ========================================
+   Layout - 主布局
+   ======================================== */
+
+.tryon-container {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  background-color: #f9fafb;
+  overflow: hidden;
+}
+
+.tryon-main {
+  display: flex;
+  flex: 1;
+  overflow: hidden;
+}
+
+/* ========================================
+   Preview Area - 中央预览区
+   ======================================== */
+
+.tryon-preview-area {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  background-color: #ffffff;
+  position: relative;
+}
+
+.tryon-preview-image {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.tryon-preview-placeholder {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  color: #9ca3af;
+  font-size: 18px;
+  text-align: center;
+}
+
+.tryon-preview-placeholder-icon {
+  font-size: 64px;
+  margin-bottom: 16px;
+  opacity: 0.5;
+}
+
+/* ========================================
+   Side Panel - 右侧面板
+   ======================================== */
+
+.tryon-side-panel {
+  width: 360px;
+  background-color: #ffffff;
+  border-left: 1px solid #e5e7eb;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.tryon-panel-section {
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.tryon-panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 20px;
+  cursor: pointer;
+  user-select: none;
+  background-color: #f9fafb;
+  transition: background-color 0.2s;
+}
+
+.tryon-panel-header:hover {
+  background-color: #f3f4f6;
+}
+
+.tryon-panel-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: #1f2937;
+}
+
+.tryon-panel-toggle {
+  font-size: 20px;
+  color: #6b7280;
+  transition: transform 0.3s;
+}
+
+.tryon-panel-toggle.expanded {
+  transform: rotate(180deg);
+}
+
+.tryon-panel-content {
+  padding: 20px;
+  overflow-y: auto;
+  max-height: 400px;
+}
+
+.tryon-panel-content.collapsed {
+  display: none;
+}
+
+/* ========================================
+   Item Grid - 3列网格布局
+   ======================================== */
+
+.tryon-item-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+}
+
+.tryon-item-card {
+  position: relative;
+  aspect-ratio: 1;
+  border-radius: 8px;
+  overflow: hidden;
+  cursor: pointer;
+  border: 2px solid transparent;
+  transition: all 0.2s;
+  background-color: #f9fafb;
+}
+
+.tryon-item-card:hover {
+  border-color: #d1d5db;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.tryon-item-card.selected {
+  border-color: #ef4444;
+  box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.1);
+}
+
+.tryon-item-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.tryon-item-name {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  padding: 8px;
+  background: linear-gradient(to top, rgba(0, 0, 0, 0.7), transparent);
+  color: #ffffff;
+  font-size: 12px;
+  font-weight: 500;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* ========================================
+   Bottom Bar - 底部模特选择栏
+   ======================================== */
+
+.tryon-bottom-bar {
+  height: 160px;
+  background-color: #ffffff;
+  border-top: 1px solid #e5e7eb;
+  padding: 16px 24px;
+  overflow-x: auto;
+  overflow-y: hidden;
+}
+
+.tryon-bottom-bar-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: #6b7280;
+  margin-bottom: 12px;
+}
+
+.tryon-model-list {
+  display: flex;
+  gap: 12px;
+  padding-bottom: 8px;
+}
+
+.tryon-model-thumbnail {
+  flex-shrink: 0;
+  width: 100px;
+  height: 100px;
+  border-radius: 8px;
+  overflow: hidden;
+  cursor: pointer;
+  border: 3px solid transparent;
+  transition: all 0.2s;
+  background-color: #f9fafb;
+}
+
+.tryon-model-thumbnail:hover {
+  border-color: #d1d5db;
+}
+
+.tryon-model-thumbnail.selected {
+  border-color: #ef4444;
+  box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.1);
+}
+
+.tryon-model-thumbnail img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* ========================================
+   Upload Zone - 上传区域
+   ======================================== */
+
+.tryon-upload-zone {
+  border: 2px dashed #d1d5db;
+  border-radius: 8px;
+  padding: 24px;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.2s;
+  background-color: #f9fafb;
+  margin-bottom: 16px;
+}
+
+.tryon-upload-zone:hover {
+  border-color: #4f46e5;
+  background-color: #eef2ff;
+}
+
+.tryon-upload-zone.dragging {
+  border-color: #4f46e5;
+  background-color: #eef2ff;
+  box-shadow: 0 0 0 4px rgba(79, 70, 229, 0.1);
+}
+
+.tryon-upload-icon {
+  font-size: 48px;
+  color: #9ca3af;
+  margin-bottom: 12px;
+}
+
+.tryon-upload-text {
+  font-size: 14px;
+  color: #6b7280;
+  margin-bottom: 8px;
+}
+
+.tryon-upload-hint {
+  font-size: 12px;
+  color: #9ca3af;
+}
+
+.tryon-upload-input {
+  display: none;
+}
+
+/* ========================================
+   Button Styles - 按钮样式
+   ======================================== */
+
+.tryon-btn {
+  padding: 10px 20px;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  border: none;
+  transition: all 0.2s;
+}
+
+.tryon-btn-primary {
+  background-color: #4f46e5;
+  color: #ffffff;
+}
+
+.tryon-btn-primary:hover {
+  background-color: #4338ca;
+}
+
+.tryon-btn-primary:disabled {
+  background-color: #d1d5db;
+  cursor: not-allowed;
+}
+
+.tryon-btn-secondary {
+  background-color: #f3f4f6;
+  color: #374151;
+}
+
+.tryon-btn-secondary:hover {
+  background-color: #e5e7eb;
+}
+
+/* ========================================
+   Loading & Progress - 加载和进度
+   ======================================== */
+
+.tryon-loading-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(255, 255, 255, 0.9);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  z-index: 10;
+}
+
+.tryon-loading-spinner {
+  width: 48px;
+  height: 48px;
+  border: 4px solid #e5e7eb;
+  border-top-color: #4f46e5;
+  border-radius: 50%;
+  animation: tryon-spin 1s linear infinite;
+}
+
+@keyframes tryon-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.tryon-loading-text {
+  margin-top: 16px;
+  font-size: 14px;
+  color: #6b7280;
+}
+
+.tryon-progress-bar {
+  width: 200px;
+  height: 4px;
+  background-color: #e5e7eb;
+  border-radius: 2px;
+  overflow: hidden;
+  margin-top: 12px;
+}
+
+.tryon-progress-fill {
+  height: 100%;
+  background-color: #4f46e5;
+  transition: width 0.3s;
+}
+
+/* ========================================
+   Empty State - 空状态
+   ======================================== */
+
+.tryon-empty-state {
+  text-align: center;
+  padding: 32px 16px;
+  color: #9ca3af;
+}
+
+.tryon-empty-icon {
+  font-size: 48px;
+  margin-bottom: 12px;
+  opacity: 0.5;
+}
+
+.tryon-empty-text {
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+/* ========================================
+   Error State - 错误状态
+   ======================================== */
+
+.tryon-error {
+  padding: 12px 16px;
+  background-color: #fef2f2;
+  border: 1px solid #fecaca;
+  border-radius: 6px;
+  color: #991b1b;
+  font-size: 14px;
+  margin-bottom: 16px;
+}
+
+/* ========================================
+   Responsive - 响应式
+   ======================================== */
+
+@media (max-width: 768px) {
+  .tryon-side-panel {
+    width: 100%;
+    max-width: 320px;
+  }
+
+  .tryon-item-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .tryon-bottom-bar {
+    height: 120px;
+  }
+
+  .tryon-model-thumbnail {
+    width: 80px;
+    height: 80px;
+  }
+}

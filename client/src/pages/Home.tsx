@@ -176,9 +176,17 @@ export const Home = () => {
       <div className="home-card">
         <div className="home-header">
           <h1 className="home-title">欢迎, {user?.name}!</h1>
-          <button onClick={handleLogout} className="btn btn-logout">
-            退出登录
-          </button>
+          <div style={{ display: 'flex', gap: '12px' }}>
+            <button
+              onClick={() => navigate('/tryon')}
+              className="btn btn-primary"
+            >
+              新版虚拟试衣
+            </button>
+            <button onClick={handleLogout} className="btn btn-logout">
+              退出登录
+            </button>
+          </div>
         </div>
 
         <div className="feature-section">

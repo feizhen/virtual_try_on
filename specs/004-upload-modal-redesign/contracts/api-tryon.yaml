@@ -1,0 +1,276 @@
+openapi: 3.0.3
+info:
+  title: Virtual Try-On API
+  description: API for creating and managing virtual try-on sessions
+  version: 1.0.0
+
+servers:
+  - url: http://localhost:3000/api
+
+security:
+  - BearerAuth: []
+
+tags:
+  - name: Try-On
+    description: Virtual try-on session operations
+
+paths:
+  /tryon/sessions:
+    post:
+      tags: [Try-On]
+      summary: 创建虚拟试衣会话
+      description: 提交模特和服装组合,异步生成试衣效果图
+      operationId: createTryOnSession
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateTryOnSessionDto'
+            example:
+              modelId: "model-uuid-1"
+              garmentId: "garment-uuid-1"
+              sceneId: "scene-uuid-1"
+      responses:
+        '201':
+          description: 会话创建成功(状态为PENDING,等待处理)
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data]
+                properties:
+                  data:
+                    $ref: '#/components/schemas/TryOnSession'
+              example:
+                data:
+                  id: "session-uuid-1"
+                  status: "PENDING"
+                  modelId: "model-uuid-1"
+                  garmentId: "garment-uuid-1"
+                  sceneId: "scene-uuid-1"
+                  createdAt: "2025-10-22T10:30:00Z"
+        '400':
+          description: 参数错误(无效的modelId或garmentId)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          description: 模特或服装不存在
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+    get:
+      tags: [Try-On]
+      summary: 获取用户的试衣历史
+      operationId: listTryOnSessions
+      parameters:
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [PENDING, PROCESSING, COMPLETED, FAILED]
+        - name: page
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 50
+            default: 20
+      responses:
+        '200':
+          description: 成功返回会话列表
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data]
+                properties:
+                  data:
+                    type: object
+                    required: [sessions, pagination]
+                    properties:
+                      sessions:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/TryOnSession'
+                      pagination:
+                        $ref: '#/components/schemas/Pagination'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /tryon/sessions/{id}:
+    get:
+      tags: [Try-On]
+      summary: 获取单个试衣会话详情
+      description: 查询会话状态和结果,前端可轮询此接口获取生成进度
+      operationId: getTryOnSession
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: 成功返回会话详情
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data]
+                properties:
+                  data:
+                    $ref: '#/components/schemas/TryOnSession'
+              examples:
+                pending:
+                  value:
+                    data:
+                      id: "session-uuid-1"
+                      status: "PENDING"
+                      createdAt: "2025-10-22T10:30:00Z"
+                processing:
+                  value:
+                    data:
+                      id: "session-uuid-1"
+                      status: "PROCESSING"
+                      createdAt: "2025-10-22T10:30:00Z"
+                completed:
+                  value:
+                    data:
+                      id: "session-uuid-1"
+                      status: "COMPLETED"
+                      resultImageUrl: "/uploads/tryon-results/user-id/session-uuid-1.jpg"
+                      processingTimeMs: 1850
+                      completedAt: "2025-10-22T10:30:02Z"
+                failed:
+                  value:
+                    data:
+                      id: "session-uuid-1"
+                      status: "FAILED"
+                      errorMessage: "AI service timeout"
+                      createdAt: "2025-10-22T10:30:00Z"
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    CreateTryOnSessionDto:
+      type: object
+      required: [modelId, garmentId]
+      properties:
+        modelId:
+          type: string
+          format: uuid
+          description: 模特ID
+        garmentId:
+          type: string
+          format: uuid
+          description: 服装ID
+        sceneId:
+          type: string
+          format: uuid
+          nullable: true
+          description: 场景ID(可选)
+
+    TryOnSession:
+      type: object
+      required: [id, status, modelId, garmentId, createdAt]
+      properties:
+        id:
+          type: string
+          format: uuid
+        status:
+          type: string
+          enum: [PENDING, PROCESSING, COMPLETED, FAILED]
+          description: 会话状态
+        modelId:
+          type: string
+          format: uuid
+        garmentId:
+          type: string
+          format: uuid
+        sceneId:
+          type: string
+          format: uuid
+          nullable: true
+        resultImageUrl:
+          type: string
+          format: uri
+          nullable: true
+          description: 试衣效果图URL(仅COMPLETED状态)
+        processingTimeMs:
+          type: integer
+          nullable: true
+          description: AI处理耗时(毫秒)
+        errorMessage:
+          type: string
+          nullable: true
+          description: 错误信息(仅FAILED状态)
+        createdAt:
+          type: string
+          format: date-time
+        completedAt:
+          type: string
+          format: date-time
+          nullable: true
+
+    Pagination:
+      type: object
+      required: [page, limit, total, totalPages]
+      properties:
+        page:
+          type: integer
+        limit:
+          type: integer
+        total:
+          type: integer
+        totalPages:
+          type: integer
+
+    ErrorResponse:
+      type: object
+      required: [error]
+      properties:
+        error:
+          type: object
+          required: [code, message]
+          properties:
+            code:
+              type: string
+            message:
+              type: string
+
+  responses:
+    Unauthorized:
+      description: 未授权
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+    NotFound:
+      description: 资源不存在
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'

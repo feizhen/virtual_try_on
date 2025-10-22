@@ -1,0 +1,166 @@
+openapi: 3.0.3
+info:
+  title: Model Management API
+  description: API for retrieving virtual try-on models
+  version: 1.0.0
+
+servers:
+  - url: http://localhost:3000/api
+    description: Development server
+
+security:
+  - BearerAuth: []
+
+tags:
+  - name: Models
+    description: Virtual try-on model operations
+
+paths:
+  /models:
+    get:
+      tags: [Models]
+      summary: 获取所有可用模特
+      description: 返回系统预置的活跃模特列表
+      operationId: listModels
+      parameters:
+        - name: gender
+          in: query
+          description: 筛选性别
+          schema:
+            type: string
+            enum: [MALE, FEMALE, UNISEX]
+        - name: isDefault
+          in: query
+          description: 仅返回默认模特
+          schema:
+            type: boolean
+            default: true
+      responses:
+        '200':
+          description: 成功返回模特列表
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data]
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Model'
+              example:
+                data:
+                  - id: "model-uuid-1"
+                    name: "Default Male Model"
+                    imageUrl: "/assets/models/default-male.jpg"
+                    thumbnailUrl: "/assets/models/thumbnails/default-male-thumb.jpg"
+                    gender: "MALE"
+                    bodyType: "athletic"
+                    height: 180
+                  - id: "model-uuid-2"
+                    name: "Default Female Model"
+                    imageUrl: "/assets/models/default-female.jpg"
+                    thumbnailUrl: "/assets/models/thumbnails/default-female-thumb.jpg"
+                    gender: "FEMALE"
+                    bodyType: "slim"
+                    height: 170
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /models/{id}:
+    get:
+      tags: [Models]
+      summary: 获取单个模特详情
+      operationId: getModel
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: 成功返回模特详情
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data]
+                properties:
+                  data:
+                    $ref: '#/components/schemas/Model'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    Model:
+      type: object
+      required: [id, name, imageUrl, thumbnailUrl, gender]
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        imageUrl:
+          type: string
+          format: uri
+        thumbnailUrl:
+          type: string
+          format: uri
+        gender:
+          type: string
+          enum: [MALE, FEMALE, UNISEX]
+        bodyType:
+          type: string
+          nullable: true
+        height:
+          type: integer
+          nullable: true
+
+    ErrorResponse:
+      type: object
+      required: [error]
+      properties:
+        error:
+          type: object
+          required: [code, message]
+          properties:
+            code:
+              type: string
+            message:
+              type: string
+
+  responses:
+    Unauthorized:
+      description: 未授权
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+    NotFound:
+      description: 资源不存在
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+    InternalError:
+      description: 服务器错误
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
