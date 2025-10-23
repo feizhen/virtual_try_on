@@ -13,10 +13,10 @@ export const Register: React.FC = () => {
   const navigate = useNavigate();
   const { register, isAuthenticated } = useAuth();
 
-  // 监听认证状态变化,注册成功后自动跳转
+  // 监听认证状态变化,注册成功后自动跳转到虚拟试衣页面
   useEffect(() => {
     if (isAuthenticated) {
-      navigate('/', { replace: true });
+      navigate('/tryon', { replace: true });
     }
   }, [isAuthenticated, navigate]);
 
