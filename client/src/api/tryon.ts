@@ -17,11 +17,17 @@ import type {
 export async function createTryOnSession(
   request: CreateTryOnRequest
 ): Promise<TryOnSessionResponse> {
-  const response = await apiClient.post<{ data: TryOnSessionResponse }>(
+  const response = await apiClient.post<{ data: any }>(
     '/outfit-change/tryon',
     request
   );
-  return response.data.data;
+
+  // 后端返回 {success: true, data: {success: true, data: {...}}}
+  // 需要解包两层
+  const firstLevel = response.data.data || response.data;
+  const secondLevel = firstLevel.data || firstLevel;
+
+  return secondLevel;
 }
 
 /**
@@ -31,10 +37,16 @@ export async function createTryOnSession(
 export async function getTryOnSessionStatus(
   sessionId: string
 ): Promise<TryOnSession> {
-  const response = await apiClient.get<{ data: TryOnSession }>(
+  const response = await apiClient.get<{ data: any }>(
     `/outfit-change/sessions/${sessionId}`
   );
-  return response.data.data;
+
+  // 后端返回 {success: true, data: {success: true, data: {...}}}
+  // 需要解包两层
+  const firstLevel = response.data.data || response.data;
+  const secondLevel = firstLevel.data || firstLevel;
+
+  return secondLevel;
 }
 
 /**

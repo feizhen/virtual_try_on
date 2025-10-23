@@ -207,25 +207,30 @@ export const GarmentPanel: React.FC<GarmentPanelProps> = ({
             </div>
           </div>
         ) : (
-          <div className="tryon-item-grid">
+          <div className="tryon-garment-grid">
             {garments.map((garment) => (
               <div
                 key={garment.id}
-                className={`tryon-item-card ${
+                className={`tryon-garment-card ${
                   selectedGarment?.id === garment.id ? 'selected' : ''
                 }`}
                 onClick={() => handleGarmentClick(garment)}
-                title={`${garment.name} - ${formatFileSize(
-                  garment.fileSize
-                )}`}
               >
-                <img
-                  src={getImageUrl(garment.url)}
-                  alt={garment.name}
-                  className="tryon-item-image"
-                  loading="lazy"
-                />
-                <div className="tryon-item-name">{garment.name}</div>
+                <div className="tryon-garment-image-wrapper">
+                  <img
+                    src={getImageUrl(garment.url)}
+                    alt={garment.name}
+                    className="tryon-garment-image"
+                    loading="lazy"
+                  />
+                </div>
+                <div className="tryon-garment-info">
+                  <div className="tryon-garment-name">{garment.name || '未命名服装'}</div>
+                  <div className="tryon-garment-stock">
+                    <span className="stock-label">IN STOCK</span>
+                    <span className="stock-count">1</span>
+                  </div>
+                </div>
               </div>
             ))}
           </div>

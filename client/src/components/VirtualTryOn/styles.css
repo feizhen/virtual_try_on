@@ -11,7 +11,7 @@
   padding: 20px;
   display: flex;
   flex-direction: column;
-  height: 100vh;
+  min-height: 100vh;
   background-color: #f9fafb;
   overflow: hidden;
 }
@@ -20,6 +20,7 @@
   display: flex;
   flex: 1;
   overflow: hidden;
+  height: calc(100vh - 40px);
 }
 
 /* ========================================
@@ -27,7 +28,7 @@
    ======================================== */
 
 .tryon-preview-area {
-  flex: 1;
+  flex: 6;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -35,6 +36,33 @@
   padding: 24px;
   background-color: #ffffff;
   position: relative;
+  min-width: 0;
+}
+
+.tryon-preview-area > * {
+  max-width: 600px;
+  width: 100%;
+  margin: 0 auto;
+}
+
+.tryon-preview-image-container {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+}
+
+.tryon-preview-image-wrapper {
+  position: relative;
+  max-width: 100%;
+  max-height: calc(100% - 60px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .tryon-preview-image {
@@ -43,6 +71,84 @@
   object-fit: contain;
   border-radius: 8px;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.tryon-delete-btn {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  width: 32px;
+  height: 32px;
+  border: none;
+  border-radius: 50%;
+  background-color: rgba(220, 38, 38, 0.9);
+  color: #ffffff;
+  font-size: 24px;
+  line-height: 1;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+  z-index: 10;
+}
+
+.tryon-delete-btn:hover {
+  background-color: rgba(185, 28, 28, 1);
+  transform: scale(1.1);
+  box-shadow: 0 4px 12px rgba(220, 38, 38, 0.4);
+}
+
+.tryon-delete-btn:active {
+  transform: scale(0.95);
+}
+
+.tryon-preview-actions {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+  align-items: center;
+}
+
+.tryon-action-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 20px;
+  border: none;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+  background-color: #f3f4f6;
+  color: #1f2937;
+}
+
+.tryon-action-btn:hover {
+  background-color: #e5e7eb;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.tryon-action-btn:active {
+  transform: translateY(0);
+}
+
+.tryon-action-btn-reupload:hover {
+  background-color: #dbeafe;
+  color: #1e40af;
+}
+
+.action-icon {
+  font-size: 16px;
+  line-height: 1;
+}
+
+.action-text {
+  font-size: 14px;
+  line-height: 1;
 }
 
 .tryon-preview-placeholder {
@@ -55,12 +161,32 @@
   color: #9ca3af;
   font-size: 18px;
   text-align: center;
+  border: 2px dashed #d1d5db;
+  border-radius: 12px;
+  background-color: #f9fafb;
+  transition: all 0.2s ease;
+}
+
+.tryon-preview-placeholder-clickable {
+  cursor: pointer;
+}
+
+.tryon-preview-placeholder-clickable:hover {
+  border-color: #4f46e5;
+  background-color: #f0f0ff;
+  color: #4f46e5;
+}
+
+.tryon-preview-placeholder-clickable:hover .tryon-preview-placeholder-icon {
+  transform: scale(1.1);
+  opacity: 0.8;
 }
 
 .tryon-preview-placeholder-icon {
   font-size: 64px;
   margin-bottom: 16px;
   opacity: 0.5;
+  transition: all 0.2s ease;
 }
 
 /* ========================================
@@ -68,7 +194,9 @@
    ======================================== */
 
 .tryon-side-panel {
-  width: 360px;
+  flex: 4;
+  min-width: 320px;
+  max-width: 480px;
   background-color: #ffffff;
   border-left: 1px solid #e5e7eb;
   display: flex;
@@ -171,6 +299,89 @@
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+
+/* ========================================
+   Garment Grid - 电商风格服装展示
+   ======================================== */
+
+.tryon-garment-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+  margin-top: 16px;
+}
+
+.tryon-garment-card {
+  background-color: #ffffff;
+  border-radius: 8px;
+  overflow: hidden;
+  cursor: pointer;
+  border: 2px solid transparent;
+  transition: all 0.2s;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.tryon-garment-card:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  transform: translateY(-2px);
+}
+
+.tryon-garment-card.selected {
+  border-color: #4f46e5;
+  box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
+}
+
+.tryon-garment-image-wrapper {
+  aspect-ratio: 1;
+  background-color: #f9fafb;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 12px;
+  overflow: hidden;
+}
+
+.tryon-garment-image {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.tryon-garment-info {
+  padding: 12px;
+  background-color: #ffffff;
+  text-align: center;
+}
+
+.tryon-garment-name {
+  font-size: 13px;
+  font-weight: 500;
+  color: #1f2937;
+  margin-bottom: 8px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.tryon-garment-stock {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  font-size: 11px;
+}
+
+.stock-label {
+  color: #6b7280;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.stock-count {
+  color: #1f2937;
+  font-weight: 600;
 }
 
 /* ========================================

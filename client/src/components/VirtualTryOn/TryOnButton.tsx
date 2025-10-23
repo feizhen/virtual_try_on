@@ -33,10 +33,26 @@ export const TryOnButton: React.FC = () => {
         clothingItemId: selectedGarment.id,
       });
 
+      console.log('[TryOnButton] Session response:', sessionResponse);
+      console.log('[TryOnButton] Session response keys:', Object.keys(sessionResponse));
+      console.log('[TryOnButton] sessionId:', sessionResponse.sessionId);
+
+      // 处理可能的双层包装
+      const sessionData = (sessionResponse as any).success && (sessionResponse as any).data
+        ? (sessionResponse as any).data
+        : sessionResponse;
+
+      console.log('[TryOnButton] Unwrapped session data:', sessionData);
+      console.log('[TryOnButton] Unwrapped sessionId:', sessionData.sessionId);
+
+      if (!sessionData.sessionId) {
+        throw new Error('无法获取会话ID,请重试');
+      }
+
       // 2. 设置初始会话状态
       const initialSession = {
-        sessionId: sessionResponse.sessionId,
-        status: sessionResponse.status,
+        sessionId: sessionData.sessionId,
+        status: sessionData.status || 'pending',
         modelPhotoId: selectedModel.id,
         clothingItemId: selectedGarment.id,
         createdAt: new Date().toISOString(),
@@ -45,7 +61,7 @@ export const TryOnButton: React.FC = () => {
 
       // 3. 轮询会话状态直到完成
       const finalSession = await pollTryOnSession(
-        sessionResponse.sessionId,
+        sessionData.sessionId,
         {
           onProgress: (session) => {
             setCurrentSession(session);
