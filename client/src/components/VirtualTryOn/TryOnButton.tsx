@@ -111,8 +111,6 @@ export const TryOnButton: React.FC = () => {
       >
         {processing
           ? '试衣中...'
-          : !selectedModel
-          ? '请选择模特'
           : !selectedGarment
           ? '请选择服装'
           : '开始试衣'}

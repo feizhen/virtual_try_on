@@ -11,8 +11,6 @@ import '../components/VirtualTryOn/styles.css';
  * - 右侧服装选择面板 (可折叠)
  */
 const VirtualTryOn: React.FC = () => {
-  const [garmentPanelExpanded, setGarmentPanelExpanded] = useState(true);
-
   return (
     <div className="tryon-container">
       {/* Main Content Area */}
@@ -23,13 +21,14 @@ const VirtualTryOn: React.FC = () => {
         {/* Right: Side Panel */}
         <div className="tryon-side-panel">
           {/* Garment Selection Panel */}
-          <GarmentPanel
-            isExpanded={garmentPanelExpanded}
-            onToggle={() => setGarmentPanelExpanded(!garmentPanelExpanded)}
-          />
+          <div className="tryon-panel-content-wrapper">
+            <GarmentPanel />
+          </div>
 
-          {/* Try-On Button */}
-          <TryOnButton />
+          {/* Try-On Button - Fixed at Bottom */}
+          <div className="tryon-panel-footer">
+            <TryOnButton />
+          </div>
         </div>
       </div>
     </div>

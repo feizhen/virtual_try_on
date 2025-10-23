@@ -1,8 +1,20 @@
 import React, { useRef, useState } from 'react';
+import { IoCloseCircle } from 'react-icons/io5';
 import { useTryOn } from '../../contexts/TryOnContext';
 import { getImageUrl } from '../../utils/url';
 import { uploadModel } from '../../api/model';
 import { validateImageFile } from '../../utils/imageValidation';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '../ui/alert-dialog';
 import './styles.css';
 
 export const PreviewArea: React.FC = () => {
@@ -26,11 +38,8 @@ export const PreviewArea: React.FC = () => {
 
   // 处理删除模特
   const handleDelete = () => {
-    const confirmed = window.confirm('确定要删除这张模特照片吗?');
-    if (confirmed) {
-      setSelectedModel(null);
-      setError(null);
-    }
+    setSelectedModel(null);
+    setError(null);
   };
 
   // 处理文件选择
@@ -80,27 +89,38 @@ export const PreviewArea: React.FC = () => {
     // 1. 如果有试衣结果,显示结果
     if (currentSession?.result) {
       return (
-        <img
-          src={getImageUrl(currentSession.result.url)}
-          alt="Try-on result"
-          className="tryon-preview-image"
-        />
+        <div className="tryon-preview-container">
+          <img
+            src={getImageUrl(currentSession.result.url)}
+            alt="Try-on result"
+            className="tryon-preview-image"
+          />
+        </div>
       );
     }
 
-    // 2. 如果正在处理中,显示加载状态
+    // 2. 如果正在处理中,显示模特图片并叠加加载蒙层
     if (
       currentSession &&
       (currentSession.status === 'pending' ||
         currentSession.status === 'processing')
     ) {
       return (
-        <div className="tryon-loading-overlay">
-          <div className="tryon-loading-spinner" />
-          <div className="tryon-loading-text">
-            {currentSession.status === 'pending'
-              ? '正在准备...'
-              : '正在生成试衣效果...'}
+        <div className="tryon-preview-container">
+          {selectedModel && (
+            <img
+              src={getImageUrl(selectedModel.url)}
+              alt="Model photo"
+              className="tryon-preview-image"
+            />
+          )}
+          <div className="tryon-loading-overlay">
+            <div className="tryon-loading-spinner" />
+            <div className="tryon-loading-text">
+              {currentSession.status === 'pending'
+                ? '正在准备...'
+                : '正在生成试衣效果...'}
+            </div>
           </div>
         </div>
       );
@@ -136,13 +156,30 @@ export const PreviewArea: React.FC = () => {
               className="tryon-preview-image"
             />
             {hovering && (
-              <button
-                className="tryon-delete-btn"
-                onClick={handleDelete}
-                title="删除"
-              >
-                ×
-              </button>
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <button
+                    className="tryon-delete-btn"
+                    title="删除"
+                  >
+                    <IoCloseCircle />
+                  </button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>确认删除</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      确定要删除这张模特照片吗?此操作无法撤销。
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>取消</AlertDialogCancel>
+                    <AlertDialogAction onClick={handleDelete}>
+                      删除
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
             )}
           </div>
           <div className="tryon-preview-actions">
