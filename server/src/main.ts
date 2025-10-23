@@ -29,6 +29,7 @@ async function bootstrap() {
   const allowedOrigins = [
     frontendUrl, // 配置的前端URL
     'http://localhost:5173', // 本地开发
+    'http://localhost:5174', // 本地开发 (备用端口)
     'http://localhost:3000', // 本地开发备用
   ].filter(Boolean); // 过滤掉undefined值
 

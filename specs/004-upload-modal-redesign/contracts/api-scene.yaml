@@ -1,0 +1,163 @@
+openapi: 3.0.3
+info:
+  title: Scene Management API
+  description: API for managing user scene backgrounds
+  version: 1.0.0
+
+servers:
+  - url: http://localhost:3000/api
+
+security:
+  - BearerAuth: []
+
+tags:
+  - name: Scenes
+    description: Scene background operations
+
+paths:
+  /scenes:
+    get:
+      tags: [Scenes]
+      summary: 获取用户的所有场景
+      operationId: listScenes
+      parameters:
+        - name: sceneType
+          in: query
+          schema:
+            type: string
+            enum: [INDOOR, OUTDOOR, STUDIO, CUSTOM]
+      responses:
+        '200':
+          description: 成功返回场景列表
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data]
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Scene'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+    post:
+      tags: [Scenes]
+      summary: 上传新场景
+      operationId: createScene
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required: [file]
+              properties:
+                file:
+                  type: string
+                  format: binary
+                name:
+                  type: string
+                sceneType:
+                  type: string
+                  enum: [INDOOR, OUTDOOR, STUDIO, CUSTOM]
+      responses:
+        '201':
+          description: 场景上传成功
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data]
+                properties:
+                  data:
+                    $ref: '#/components/schemas/Scene'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /scenes/{id}:
+    delete:
+      tags: [Scenes]
+      summary: 删除场景
+      operationId: deleteScene
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '204':
+          description: 删除成功
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    Scene:
+      type: object
+      required: [id, name, imageUrl, thumbnailUrl, uploadedAt]
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        imageUrl:
+          type: string
+          format: uri
+        thumbnailUrl:
+          type: string
+          format: uri
+        sceneType:
+          type: string
+          enum: [INDOOR, OUTDOOR, STUDIO, CUSTOM]
+          nullable: true
+        uploadedAt:
+          type: string
+          format: date-time
+
+    ErrorResponse:
+      type: object
+      required: [error]
+      properties:
+        error:
+          type: object
+          required: [code, message]
+          properties:
+            code:
+              type: string
+            message:
+              type: string
+
+  responses:
+    BadRequest:
+      description: 请求参数错误
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+    Unauthorized:
+      description: 未授权
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+    NotFound:
+      description: 资源不存在
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'

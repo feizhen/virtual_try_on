@@ -1,25 +1,13 @@
 :root {
-  /* Design System Colors */
-  --primary-color: #1F2937;           /* 主深色 - 深石板灰 (设计系统对齐) */
-  --primary-hover: #111827;           /* 悬停深色 (设计系统对齐) */
-  --main-dark: #1F2937;               /* 主深色 (新增 - 设计系统) */
-  --hover-dark: #111827;              /* 悬停深色 (新增 - 设计系统) */
-
-  /* Secondary Colors */
+  --primary-color: #4f46e5;
+  --primary-hover: #4338ca;
   --secondary-color: #6b7280;
   --success-color: #10b981;
   --error-color: #ef4444;
-
-  /* Background Colors */
   --background: #f9fafb;
   --card-background: #ffffff;
-
-  /* Text Colors */
-  --text-primary: #1F2937;            /* 主要文本色 (设计系统对齐) */
+  --text-primary: #111827;
   --text-secondary: #6b7280;
-  --text-tertiary: #9CA3AF;           /* 三级文本/占位符色 (新增 - 设计系统) */
-
-  /* Border & Shadows */
   --border-color: #e5e7eb;
   --shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
   --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
@@ -61,14 +49,13 @@ a:hover {
 }
 
 .btn {
-  padding: 12px 24px; /* 设计系统对齐：从 0.75rem 1.5rem 改为 12px 24px */
-  height: 48px; /* 设计系统对齐：新增固定高度 */
+  padding: 0.75rem 1.5rem;
   border: none;
-  border-radius: 6px; /* 设计系统对齐：从 0.5rem (8px) 改为 6px */
-  font-size: 15px; /* 设计系统对齐：从 1rem (16px) 改为 15px */
+  border-radius: 0.5rem;
+  font-size: 1rem;
   font-weight: 500;
   cursor: pointer;
-  transition: background-color 150ms cubic-bezier(0.4, 0.0, 0.2, 1); /* 设计系统对齐：精确过渡 */
+  transition: all 0.2s;
   width: 100%;
   display: flex;
   align-items: center;
@@ -77,23 +64,19 @@ a:hover {
 }
 
 .btn:disabled {
-  opacity: 0.5; /* 设计系统对齐：从 0.6 改为 0.5 */
+  opacity: 0.6;
   cursor: not-allowed;
 }
 
 .btn-primary {
-  background-color: var(--main-dark); /* 设计系统对齐：使用主深色 */
+  background-color: var(--primary-color);
   color: white;
 }
 
 .btn-primary:hover:not(:disabled) {
-  background-color: var(--hover-dark); /* 设计系统对齐：使用悬停深色 */
-  /* 设计系统对齐：移除 transform 和 box-shadow */
-}
-
-.btn-primary:disabled {
-  background-color: #9CA3AF; /* 设计系统对齐：禁用状态背景 */
-  opacity: 0.5; /* 设计系统对齐 */
+  background-color: var(--primary-hover);
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-lg);
 }
 
 .btn-google {

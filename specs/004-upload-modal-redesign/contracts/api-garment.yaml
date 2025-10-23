@@ -1,0 +1,449 @@
+openapi: 3.0.3
+info:
+  title: Garment Management API
+  description: API for managing user garment uploads and inventory
+  version: 1.0.0
+  contact:
+    name: Virtual Try-On Team
+
+servers:
+  - url: http://localhost:3000/api
+    description: Development server
+  - url: https://api.virtualtry on.example.com/api
+    description: Production server
+
+security:
+  - BearerAuth: []
+
+tags:
+  - name: Garments
+    description: Garment upload and management operations
+
+paths:
+  /garments:
+    get:
+      tags: [Garments]
+      summary: 获取用户的所有服装
+      description: 返回当前用户上传的服装列表,支持分页和排序
+      operationId: listGarments
+      parameters:
+        - name: page
+          in: query
+          description: 页码(从1开始)
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+        - name: limit
+          in: query
+          description: 每页数量
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+        - name: sortBy
+          in: query
+          description: 排序字段
+          schema:
+            type: string
+            enum: [uploadedAt, name, createdAt]
+            default: uploadedAt
+        - name: order
+          in: query
+          description: 排序方向
+          schema:
+            type: string
+            enum: [asc, desc]
+            default: desc
+      responses:
+        '200':
+          description: 成功返回服装列表
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GarmentListResponse'
+              example:
+                data:
+                  garments:
+                    - id: "550e8400-e29b-41d4-a716-446655440000"
+                      name: "Garment 1"
+                      imageUrl: "/uploads/garments/originals/user-id/garment-1.jpg"
+                      thumbnailUrl: "/uploads/garments/thumbnails/user-id/garment-1-thumb.jpg"
+                      stockStatus: "IN_STOCK"
+                      quantity: 1
+                      uploadedAt: "2025-10-22T10:30:00Z"
+                  pagination:
+                    page: 1
+                    limit: 20
+                    total: 5
+                    totalPages: 1
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+    post:
+      tags: [Garments]
+      summary: 上传新服装
+      description: 上传服装图片并创建服装记录
+      operationId: createGarment
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required: [file]
+              properties:
+                file:
+                  type: string
+                  format: binary
+                  description: 服装图片文件(JPG/PNG/WEBP,最大10MB)
+                name:
+                  type: string
+                  minLength: 2
+                  maxLength: 100
+                  description: 可选的服装名称,未提供时自动生成
+            encoding:
+              file:
+                contentType: image/jpeg, image/png, image/webp
+      responses:
+        '201':
+          description: 服装上传成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GarmentResponse'
+              example:
+                data:
+                  id: "550e8400-e29b-41d4-a716-446655440000"
+                  name: "Garment 1"
+                  imageUrl: "/uploads/garments/originals/user-id/garment-1.jpg"
+                  thumbnailUrl: "/uploads/garments/thumbnails/user-id/garment-1-thumb.jpg"
+                  mimeType: "image/jpeg"
+                  fileSize: 2048576
+                  width: 800
+                  height: 1200
+                  stockStatus: "IN_STOCK"
+                  quantity: 1
+                  uploadedAt: "2025-10-22T10:30:00Z"
+        '400':
+          description: 请求参数错误(文件类型或大小不符)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                invalidFileType:
+                  value:
+                    error:
+                      code: "INVALID_FILE_TYPE"
+                      message: "不支持的文件格式,请上传 JPG、PNG 或 WEBP 格式的图片"
+                fileTooLarge:
+                  value:
+                    error:
+                      code: "FILE_TOO_LARGE"
+                      message: "图片文件过大,请上传小于10MB的图片"
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '413':
+          description: 文件大小超过限制
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                error:
+                  code: "PAYLOAD_TOO_LARGE"
+                  message: "图片文件过大,请上传小于10MB的图片"
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /garments/{id}:
+    get:
+      tags: [Garments]
+      summary: 获取单个服装详情
+      description: 根据ID获取服装完整信息
+      operationId: getGarment
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: 服装UUID
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: 成功返回服装详情
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GarmentResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          description: 无权访问该服装(不属于当前用户)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: 服装不存在
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+    patch:
+      tags: [Garments]
+      summary: 更新服装信息
+      description: 更新服装的名称、库存状态或数量
+      operationId: updateGarment
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateGarmentDto'
+      responses:
+        '200':
+          description: 更新成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GarmentResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+    delete:
+      tags: [Garments]
+      summary: 删除服装
+      description: 删除指定服装及其关联的试衣记录
+      operationId: deleteGarment
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '204':
+          description: 删除成功
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: JWT access token from /auth/login
+
+  schemas:
+    Garment:
+      type: object
+      required: [id, name, imageUrl, thumbnailUrl, mimeType, fileSize, stockStatus, quantity, uploadedAt]
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: 服装唯一标识
+        name:
+          type: string
+          minLength: 2
+          maxLength: 100
+          description: 服装名称
+        imageUrl:
+          type: string
+          format: uri
+          description: 原图URL
+        thumbnailUrl:
+          type: string
+          format: uri
+          description: 缩略图URL (200x200)
+        mimeType:
+          type: string
+          enum: [image/jpeg, image/png, image/webp]
+          description: 文件MIME类型
+        fileSize:
+          type: integer
+          minimum: 1
+          maximum: 10485760
+          description: 文件大小(bytes)
+        width:
+          type: integer
+          nullable: true
+          description: 图片宽度(px)
+        height:
+          type: integer
+          nullable: true
+          description: 图片高度(px)
+        stockStatus:
+          type: string
+          enum: [IN_STOCK, OUT_OF_STOCK]
+          description: 库存状态
+        quantity:
+          type: integer
+          minimum: 0
+          description: 数量
+        uploadedAt:
+          type: string
+          format: date-time
+          description: 上传时间
+
+    GarmentResponse:
+      type: object
+      required: [data]
+      properties:
+        data:
+          $ref: '#/components/schemas/Garment'
+
+    GarmentListResponse:
+      type: object
+      required: [data]
+      properties:
+        data:
+          type: object
+          required: [garments, pagination]
+          properties:
+            garments:
+              type: array
+              items:
+                $ref: '#/components/schemas/Garment'
+            pagination:
+              $ref: '#/components/schemas/Pagination'
+
+    Pagination:
+      type: object
+      required: [page, limit, total, totalPages]
+      properties:
+        page:
+          type: integer
+          minimum: 1
+        limit:
+          type: integer
+          minimum: 1
+        total:
+          type: integer
+          minimum: 0
+          description: 总记录数
+        totalPages:
+          type: integer
+          minimum: 0
+          description: 总页数
+
+    UpdateGarmentDto:
+      type: object
+      properties:
+        name:
+          type: string
+          minLength: 2
+          maxLength: 100
+        stockStatus:
+          type: string
+          enum: [IN_STOCK, OUT_OF_STOCK]
+        quantity:
+          type: integer
+          minimum: 0
+
+    ErrorResponse:
+      type: object
+      required: [error]
+      properties:
+        error:
+          type: object
+          required: [code, message]
+          properties:
+            code:
+              type: string
+              description: 错误代码
+            message:
+              type: string
+              description: 错误消息
+            details:
+              type: object
+              description: 额外错误详情
+              additionalProperties: true
+
+  responses:
+    BadRequest:
+      description: 请求参数错误
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            error:
+              code: "BAD_REQUEST"
+              message: "Invalid request parameters"
+
+    Unauthorized:
+      description: 未授权,需要登录
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            error:
+              code: "UNAUTHORIZED"
+              message: "Authentication required"
+
+    Forbidden:
+      description: 无权访问资源
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            error:
+              code: "FORBIDDEN"
+              message: "Access denied"
+
+    NotFound:
+      description: 资源不存在
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            error:
+              code: "NOT_FOUND"
+              message: "Resource not found"
+
+    InternalError:
+      description: 服务器内部错误
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            error:
+              code: "INTERNAL_ERROR"
+              message: "An unexpected error occurred"

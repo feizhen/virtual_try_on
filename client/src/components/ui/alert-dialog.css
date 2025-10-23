@@ -1,0 +1,168 @@
+/* AlertDialog Styles */
+
+.alert-dialog-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  background-color: rgba(0, 0, 0, 0.5);
+  animation: fadeIn 150ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.alert-dialog-overlay[data-state='closed'] {
+  animation: fadeOut 150ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.alert-dialog-content {
+  position: fixed;
+  left: 50%;
+  top: 50%;
+  z-index: 50;
+  width: 90%;
+  max-width: 500px;
+  transform: translate(-50%, -50%);
+  background-color: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  padding: 24px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+  animation: contentShow 150ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.alert-dialog-content[data-state='closed'] {
+  animation: contentHide 150ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.alert-dialog-header {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  text-align: left;
+  margin-bottom: 16px;
+}
+
+.alert-dialog-title {
+  font-size: 18px;
+  font-weight: 600;
+  color: #1f2937;
+  line-height: 1.5;
+}
+
+.alert-dialog-description {
+  font-size: 14px;
+  color: #6b7280;
+  line-height: 1.5;
+}
+
+.alert-dialog-footer {
+  display: flex;
+  flex-direction: column-reverse;
+  gap: 8px;
+  margin-top: 24px;
+}
+
+@media (min-width: 640px) {
+  .alert-dialog-footer {
+    flex-direction: row;
+    justify-content: flex-end;
+  }
+}
+
+.alert-dialog-action {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 40px;
+  padding: 0 16px;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 600;
+  background-color: #dc2626;
+  color: #ffffff;
+  border: none;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.alert-dialog-action:hover {
+  background-color: #b91c1c;
+}
+
+.alert-dialog-action:focus {
+  outline: none;
+  box-shadow: 0 0 0 2px #dc2626, 0 0 0 4px rgba(220, 38, 38, 0.2);
+}
+
+.alert-dialog-action:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+.alert-dialog-cancel {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 40px;
+  padding: 0 16px;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 600;
+  background-color: transparent;
+  color: #374151;
+  border: 1px solid #d1d5db;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.alert-dialog-cancel:hover {
+  background-color: #f3f4f6;
+}
+
+.alert-dialog-cancel:focus {
+  outline: none;
+  box-shadow: 0 0 0 2px #9ca3af, 0 0 0 4px rgba(156, 163, 175, 0.2);
+}
+
+.alert-dialog-cancel:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes fadeOut {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+}
+
+@keyframes contentShow {
+  from {
+    opacity: 0;
+    transform: translate(-50%, -48%) scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
+  }
+}
+
+@keyframes contentHide {
+  from {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
+  }
+  to {
+    opacity: 0;
+    transform: translate(-50%, -48%) scale(0.96);
+  }
+}
