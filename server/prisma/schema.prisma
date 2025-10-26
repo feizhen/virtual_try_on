@@ -10,6 +10,13 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+enum TransactionType {
+  INITIAL_GRANT
+  DEDUCT
+  REFUND
+  ADMIN_ADJUSTMENT
+}
+
 model User {
   id            String    @id @default(uuid())
   email         String    @unique
@@ -30,13 +37,21 @@ model User {
   updatedAt     DateTime  @updatedAt @map("updated_at")
   lastLoginAt   DateTime? @map("last_login_at")
 
-  // Relations
-  refreshTokens      RefreshToken[]
-  modelPhotos        ModelPhoto[]
-  clothingItems      ClothingItem[]
-  outfitResults      OutfitResult[]
-  processingSessions ProcessingSession[]
+  // Credit system fields
+  creditBalance      Int      @default(100) @map("credit_balance")
+  totalCreditsSpent  Int      @default(0) @map("total_credits_spent")
+  totalCreditsEarned Int      @default(0) @map("total_credits_earned")
+  creditUpdatedAt    DateTime @default(now()) @updatedAt @map("credit_updated_at")
 
+  // Relations
+  refreshTokens       RefreshToken[]
+  modelPhotos         ModelPhoto[]
+  clothingItems       ClothingItem[]
+  outfitResults       OutfitResult[]
+  processingSessions  ProcessingSession[]
+  creditTransactions  CreditTransaction[]
+
+  @@index([creditBalance])
   @@map("users")
 }
 
@@ -54,16 +69,21 @@ model RefreshToken {
 }
 
 model ModelPhoto {
-  id               String    @id @default(uuid())
-  userId           String    @map("user_id")
-  imageUrl         String    @map("image_url") // Local file path, e.g., "uploads/models/uuid.jpg"
-  originalFileName String?   @map("original_file_name")
-  fileSize         Int       @map("file_size")
-  mimeType         String    @map("mime_type")
-  width            Int
-  height           Int
-  uploadedAt       DateTime  @default(now()) @map("uploaded_at")
-  deletedAt        DateTime? @map("deleted_at")
+  id                 String    @id @default(uuid())
+  userId             String    @map("user_id")
+  imageUrl           String    @map("image_url") // Local file path, e.g., "uploads/models/uuid.jpg"
+  originalFileName   String?   @map("original_file_name")
+  fileSize           Int       @map("file_size")
+  mimeType           String    @map("mime_type")
+  width              Int
+  height             Int
+  uploadedAt         DateTime  @default(now()) @map("uploaded_at")
+  deletedAt          DateTime? @map("deleted_at")
+
+  // Version and replacement tracking
+  version            Int       @default(1)
+  replacementHistory Json?     @map("replacement_history") @db.JsonB
+  isArchived         Boolean   @default(false) @map("is_archived")
 
   // Relations
   user               User                @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -113,42 +133,83 @@ model OutfitResult {
   createdAt          DateTime  @default(now()) @map("created_at")
   deletedAt          DateTime? @map("deleted_at")
 
+  // Credit and retry tracking
+  creditsUsed        Int       @default(10) @map("credits_used")
+  isRetry            Boolean   @default(false) @map("is_retry")
+  retryFromId        String?   @map("retry_from_id")
+
   // Relations
   user               User                @relation(fields: [userId], references: [id], onDelete: Cascade)
   modelPhoto         ModelPhoto          @relation(fields: [modelPhotoId], references: [id])
   clothingItem       ClothingItem        @relation(fields: [clothingItemId], references: [id])
   processingSessions ProcessingSession[]
+  retryFrom          OutfitResult?       @relation("RetryChain", fields: [retryFromId], references: [id], onDelete: SetNull)
+  retries            OutfitResult[]      @relation("RetryChain")
 
   @@index([userId])
   @@index([modelPhotoId])
   @@index([clothingItemId])
   @@index([createdAt(sort: Desc)])
   @@index([userId, modelPhotoId, clothingItemId])
+  @@index([userId, createdAt(sort: Desc)])
+  @@index([userId, deletedAt])
+  @@index([retryFromId])
   @@map("outfit_results")
 }
 
 model ProcessingSession {
-  id             String    @id @default(uuid())
-  userId         String    @map("user_id")
-  modelPhotoId   String    @map("model_photo_id")
-  clothingItemId String    @map("clothing_item_id")
-  status         String    @default("pending") // "pending" | "processing" | "completed" | "failed"
-  resultId       String?   @map("result_id")
-  errorMessage   String?   @map("error_message")
-  retryCount     Int       @default(0) @map("retry_count")
-  createdAt      DateTime  @default(now()) @map("created_at")
-  startedAt      DateTime? @map("started_at")
-  completedAt    DateTime? @map("completed_at")
+  id                        String    @id @default(uuid())
+  userId                    String    @map("user_id")
+  modelPhotoId              String    @map("model_photo_id")
+  clothingItemId            String    @map("clothing_item_id")
+  status                    String    @default("pending") // "pending" | "processing" | "completed" | "failed"
+  resultId                  String?   @map("result_id")
+  errorMessage              String?   @map("error_message")
+  retryCount                Int       @default(0) @map("retry_count")
+  createdAt                 DateTime  @default(now()) @map("created_at")
+  startedAt                 DateTime? @map("started_at")
+  completedAt               DateTime? @map("completed_at")
+
+  // Credit transaction tracking
+  creditTransactionId       String?   @map("credit_transaction_id")
+  creditRefundTransactionId String?   @map("credit_refund_transaction_id")
 
   // Relations
-  user         User          @relation(fields: [userId], references: [id], onDelete: Cascade)
-  modelPhoto   ModelPhoto    @relation(fields: [modelPhotoId], references: [id])
-  clothingItem ClothingItem  @relation(fields: [clothingItemId], references: [id])
-  result       OutfitResult? @relation(fields: [resultId], references: [id])
+  user                User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
+  modelPhoto          ModelPhoto           @relation(fields: [modelPhotoId], references: [id])
+  clothingItem        ClothingItem         @relation(fields: [clothingItemId], references: [id])
+  result              OutfitResult?        @relation(fields: [resultId], references: [id])
+  creditTransaction   CreditTransaction?   @relation("SessionDeduct", fields: [creditTransactionId], references: [id], onDelete: SetNull)
+  creditRefund        CreditTransaction?   @relation("SessionRefund", fields: [creditRefundTransactionId], references: [id], onDelete: SetNull)
 
   @@index([userId])
   @@index([status])
   @@index([createdAt(sort: Desc)])
   @@index([userId, status])
+  @@index([creditTransactionId])
+  @@index([creditRefundTransactionId])
   @@map("processing_sessions")
+}
+
+model CreditTransaction {
+  id            String          @id @default(uuid())
+  userId        String          @map("user_id")
+  type          TransactionType
+  amount        Int
+  balanceBefore Int             @map("balance_before")
+  balanceAfter  Int             @map("balance_after")
+  sessionId     String?         @map("session_id")
+  description   String
+  metadata      Json?           @db.JsonB
+  createdAt     DateTime        @default(now()) @map("created_at")
+
+  // Relations
+  user           User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+  sessionDeduct  ProcessingSession[] @relation("SessionDeduct")
+  sessionRefund  ProcessingSession[] @relation("SessionRefund")
+
+  @@index([userId, createdAt(sort: Desc)])
+  @@index([type])
+  @@index([sessionId])
+  @@map("credit_transactions")
 }

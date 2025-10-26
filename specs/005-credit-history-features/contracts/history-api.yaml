@@ -1,0 +1,588 @@
+openapi: 3.0.3
+info:
+  title: Try-On History API
+  description: API endpoints for managing virtual try-on history, retries, and model photo replacement
+  version: 1.0.0
+  contact:
+    name: Virtual Try-On Team
+
+servers:
+  - url: http://localhost:3000/api
+    description: Local development server
+  - url: https://api.virtual-tryon.com/api
+    description: Production server
+
+tags:
+  - name: History
+    description: Try-on history management
+  - name: Retry
+    description: Retry failed or regenerate successful try-ons
+  - name: Model Management
+    description: Model photo management (replacement)
+
+security:
+  - BearerAuth: []
+
+paths:
+  /history:
+    get:
+      tags:
+        - History
+      summary: Get try-on history
+      description: Returns paginated list of virtual try-on results for the authenticated user
+      operationId: getTryOnHistory
+      parameters:
+        - name: cursor
+          in: query
+          description: Cursor for pagination (result ID)
+          required: false
+          schema:
+            type: string
+            format: uuid
+        - name: limit
+          in: query
+          description: Number of results to return (max 100)
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+        - name: status
+          in: query
+          description: Filter by processing status
+          required: false
+          schema:
+            type: string
+            enum: [pending, processing, completed, failed]
+      responses:
+        '200':
+          description: History retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: object
+                    properties:
+                      items:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/TryOnHistoryItem'
+                      nextCursor:
+                        type: string
+                        format: uuid
+                        nullable: true
+                      hasMore:
+                        type: boolean
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /history/{id}:
+    get:
+      tags:
+        - History
+      summary: Get try-on result details
+      description: Returns detailed information for a specific try-on result
+      operationId: getTryOnResultDetail
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Try-on result ID
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Result details retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    $ref: '#/components/schemas/TryOnResultDetail'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+    delete:
+      tags:
+        - History
+      summary: Soft delete try-on result
+      description: Marks a try-on result as deleted (soft delete, data is retained)
+      operationId: deleteTryOnResult
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Try-on result ID
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Result deleted successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: object
+                    properties:
+                      message:
+                        type: string
+                        example: 'Try-on result deleted successfully'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /outfit-change/retry/{resultId}:
+    post:
+      tags:
+        - Retry
+      summary: Retry virtual try-on
+      description: Retry a failed try-on or regenerate a successful one using the same model and clothing images
+      operationId: retryTryOn
+      parameters:
+        - name: resultId
+          in: path
+          required: true
+          description: Original try-on result ID to retry
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '201':
+          description: Retry initiated successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: object
+                    properties:
+                      sessionId:
+                        type: string
+                        format: uuid
+                        description: New processing session ID
+                        example: 's-new-session-uuid'
+                      status:
+                        type: string
+                        example: 'pending'
+                      creditsDeducted:
+                        type: integer
+                        example: 10
+                      retryFrom:
+                        type: string
+                        format: uuid
+                        description: Original result ID
+                        example: 'r-original-result-uuid'
+        '400':
+          description: Invalid retry request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                InsufficientCredit:
+                  value:
+                    success: false
+                    error:
+                      code: 'INSUFFICIENT_CREDIT'
+                      message: 'Insufficient credit balance to retry'
+                      details:
+                        required: 10
+                        available: 5
+                ImageDeleted:
+                  value:
+                    success: false
+                    error:
+                      code: 'IMAGE_NOT_FOUND'
+                      message: 'Original model or clothing image no longer exists'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /outfit-change/models/{id}/replace:
+    post:
+      tags:
+        - Model Management
+      summary: Replace model photo
+      description: Replace an existing model photo with a new one
+      operationId: replaceModelPhoto
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Model photo ID to replace
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required:
+                - file
+              properties:
+                file:
+                  type: string
+                  format: binary
+                  description: New model photo file (JPEG, PNG, or WebP, max 10MB)
+      responses:
+        '200':
+          description: Model photo replaced successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    $ref: '#/components/schemas/ModelPhotoResponse'
+        '400':
+          description: Invalid file upload
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                FileTooLarge:
+                  value:
+                    success: false
+                    error:
+                      code: 'FILE_TOO_LARGE'
+                      message: 'File size exceeds 10MB limit'
+                      details:
+                        maxSize: 10485760
+                        actualSize: 15728640
+                InvalidFormat:
+                  value:
+                    success: false
+                    error:
+                      code: 'INVALID_FILE_FORMAT'
+                      message: 'File must be JPEG, PNG, or WebP'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+components:
+  schemas:
+    TryOnHistoryItem:
+      type: object
+      required:
+        - id
+        - modelPhotoUrl
+        - clothingImageUrl
+        - status
+        - creditsUsed
+        - isRetry
+        - createdAt
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Try-on result ID
+          example: 'r1b2c3d4-e5f6-7890-abcd-ef1234567890'
+        modelPhotoUrl:
+          type: string
+          description: Model photo URL
+          example: '/uploads/models/abc-123.jpg'
+        clothingImageUrl:
+          type: string
+          description: Clothing image URL
+          example: '/uploads/clothing/def-456.jpg'
+        resultImageUrl:
+          type: string
+          nullable: true
+          description: Generated result image URL (null if pending/failed)
+          example: '/uploads/results/ghi-789.png'
+        status:
+          type: string
+          enum: [pending, processing, completed, failed]
+          description: Processing status
+          example: 'completed'
+        errorMessage:
+          type: string
+          nullable: true
+          description: Error message (if failed)
+          example: null
+        creditsUsed:
+          type: integer
+          description: Credits consumed for this try-on
+          example: 10
+        creditsRefunded:
+          type: integer
+          nullable: true
+          description: Credits refunded (if failed)
+          example: null
+        isRetry:
+          type: boolean
+          description: Whether this is a retry/regeneration
+          example: false
+        retryFromId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Original result ID (if this is a retry)
+          example: null
+        processingDuration:
+          type: integer
+          nullable: true
+          description: Processing duration in milliseconds
+          example: 45000
+        createdAt:
+          type: string
+          format: date-time
+          description: Creation timestamp
+          example: '2025-10-25T10:30:00Z'
+
+    TryOnResultDetail:
+      allOf:
+        - $ref: '#/components/schemas/TryOnHistoryItem'
+        - type: object
+          properties:
+            modelPhoto:
+              type: object
+              description: Full model photo details
+              properties:
+                id:
+                  type: string
+                  format: uuid
+                originalFileName:
+                  type: string
+                fileSize:
+                  type: integer
+                width:
+                  type: integer
+                height:
+                  type: integer
+                version:
+                  type: integer
+                  description: Current version number
+                  example: 1
+            clothingItem:
+              type: object
+              description: Full clothing item details
+              properties:
+                id:
+                  type: string
+                  format: uuid
+                originalFileName:
+                  type: string
+                fileSize:
+                  type: integer
+                width:
+                  type: integer
+                height:
+                  type: integer
+            session:
+              type: object
+              description: Processing session details
+              properties:
+                id:
+                  type: string
+                  format: uuid
+                retryCount:
+                  type: integer
+                startedAt:
+                  type: string
+                  format: date-time
+                  nullable: true
+                completedAt:
+                  type: string
+                  format: date-time
+                  nullable: true
+            retryChain:
+              type: array
+              description: List of related retries (if any)
+              items:
+                type: object
+                properties:
+                  id:
+                    type: string
+                    format: uuid
+                  status:
+                    type: string
+                  createdAt:
+                    type: string
+                    format: date-time
+
+    ModelPhotoResponse:
+      type: object
+      required:
+        - id
+        - userId
+        - imageUrl
+        - originalFileName
+        - fileSize
+        - mimeType
+        - width
+        - height
+        - version
+        - uploadedAt
+      properties:
+        id:
+          type: string
+          format: uuid
+          example: 'm1b2c3d4-e5f6-7890-abcd-ef1234567890'
+        userId:
+          type: string
+          format: uuid
+        imageUrl:
+          type: string
+          description: New image URL
+          example: '/uploads/models/xyz-new.jpg'
+        originalFileName:
+          type: string
+          example: 'my-photo.jpg'
+        fileSize:
+          type: integer
+          description: File size in bytes
+          example: 2048576
+        mimeType:
+          type: string
+          example: 'image/jpeg'
+        width:
+          type: integer
+          example: 1024
+        height:
+          type: integer
+          example: 1536
+        version:
+          type: integer
+          description: New version number
+          example: 2
+        uploadedAt:
+          type: string
+          format: date-time
+        replacementHistory:
+          type: array
+          nullable: true
+          description: History of previous versions (if old image was referenced)
+          items:
+            type: object
+            properties:
+              version:
+                type: integer
+              oldUrl:
+                type: string
+              replacedAt:
+                type: string
+                format: date-time
+              fileSize:
+                type: integer
+
+    ErrorResponse:
+      type: object
+      required:
+        - success
+        - error
+      properties:
+        success:
+          type: boolean
+          example: false
+        error:
+          type: object
+          required:
+            - code
+            - message
+          properties:
+            code:
+              type: string
+              description: Error code for programmatic handling
+            message:
+              type: string
+              description: Human-readable error message
+            details:
+              type: object
+              nullable: true
+              additionalProperties: true
+
+  responses:
+    BadRequest:
+      description: Invalid request parameters
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+
+    Unauthorized:
+      description: Unauthorized - Missing or invalid authentication token
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            success: false
+            error:
+              code: 'UNAUTHORIZED'
+              message: 'Authentication token is missing or invalid'
+
+    NotFound:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            success: false
+            error:
+              code: 'NOT_FOUND'
+              message: 'Requested resource not found'
+
+    InternalError:
+      description: Internal server error
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            success: false
+            error:
+              code: 'INTERNAL_ERROR'
+              message: 'An unexpected error occurred'
+
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: JWT access token obtained from /api/auth/login

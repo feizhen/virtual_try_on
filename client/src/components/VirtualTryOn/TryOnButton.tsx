@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useTryOn } from '../../contexts/TryOnContext';
+import { useCredit } from '../../contexts/CreditContext';
 import { createTryOnSession, pollTryOnSession } from '../../api/tryon';
 import './styles.css';
 
@@ -12,14 +13,23 @@ export const TryOnButton: React.FC = () => {
     addToHistory,
   } = useTryOn();
 
+  const { balance, refreshBalance } = useCredit();
   const [processing, setProcessing] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const canTryOn = selectedModel && selectedGarment && !processing;
+  const CREDITS_PER_TRYON = 10;
+  const hasEnoughCredits = (balance?.creditBalance ?? 0) >= CREDITS_PER_TRYON;
+  const canTryOn = selectedModel && selectedGarment && !processing && hasEnoughCredits;
 
   const handleTryOn = async () => {
     if (!selectedModel || !selectedGarment) {
       setError('请先选择模特和服装');
+      return;
+    }
+
+    // Credit 余额检查
+    if (!hasEnoughCredits) {
+      setError(`Credits 不足！需要 ${CREDITS_PER_TRYON} credits，当前余额: ${balance?.creditBalance ?? 0}`);
       return;
     }
 
@@ -74,8 +84,12 @@ export const TryOnButton: React.FC = () => {
       // 4. 处理最终结果
       if (finalSession.status === 'completed') {
         addToHistory(finalSession);
+        // 刷新 credit 余额
+        await refreshBalance();
       } else if (finalSession.status === 'failed') {
         setError(finalSession.errorMessage || '试衣失败');
+        // 失败时也刷新余额（因为可能已经退款）
+        await refreshBalance();
       }
     } catch (err) {
       const errorMessage =
@@ -108,12 +122,19 @@ export const TryOnButton: React.FC = () => {
         onClick={handleTryOn}
         disabled={!canTryOn}
         style={{ width: '100%' }}
+        title={
+          !hasEnoughCredits
+            ? `Credits 不足，需要 ${CREDITS_PER_TRYON} credits`
+            : ''
+        }
       >
         {processing
           ? '试衣中...'
+          : !hasEnoughCredits
+          ? `Credits 不足 (需要 ${CREDITS_PER_TRYON})`
           : !selectedGarment
           ? '请选择服装'
-          : '开始试衣'}
+          : `开始试衣 (-${CREDITS_PER_TRYON} Credits)`}
       </button>
 
       {currentSession && (

@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
+import { CreditBadge } from '../components/Credit/CreditBadge';
 import { ModelUpload } from '../components/ModelUpload';
 import { ClothingUpload } from '../components/ClothingUpload';
 import { outfitChangeApi } from '../api/outfit-change';
@@ -176,7 +177,8 @@ export const Home = () => {
       <div className="home-card">
         <div className="home-header">
           <h1 className="home-title">欢迎, {user?.name}!</h1>
-          <div style={{ display: 'flex', gap: '12px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+            <CreditBadge />
             <button
               onClick={() => navigate('/tryon')}
               className="btn btn-primary"

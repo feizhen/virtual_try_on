@@ -2,6 +2,7 @@ import {
   Controller,
   Post,
   Get,
+  Delete,
   UseInterceptors,
   UploadedFile,
   Body,
@@ -174,6 +175,40 @@ export class OutfitChangeController {
       success: true,
       data: results,
       total: results.length,
+    };
+  }
+
+  /**
+   * Delete clothing item
+   * DELETE /api/outfit-change/clothing/:id
+   */
+  @Delete('clothing/:id')
+  async deleteClothing(@Request() req: any, @Param('id') id: string) {
+    const userId = req.user.sub;
+    this.logger.log(`User ${userId} deleting clothing item ${id}`);
+
+    const result = await this.outfitChangeService.deleteClothingItem(userId, id);
+
+    return {
+      success: true,
+      data: result,
+    };
+  }
+
+  /**
+   * Delete model photo
+   * DELETE /api/outfit-change/models/:id
+   */
+  @Delete('models/:id')
+  async deleteModel(@Request() req: any, @Param('id') id: string) {
+    const userId = req.user.sub;
+    this.logger.log(`User ${userId} deleting model photo ${id}`);
+
+    const result = await this.outfitChangeService.deleteModelPhoto(userId, id);
+
+    return {
+      success: true,
+      data: result,
     };
   }
 }

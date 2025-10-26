@@ -6,10 +6,12 @@ import { OutfitChangeService } from './outfit-change.service';
 import { StorageService } from './storage/storage.service';
 import { GeminiService } from './gemini/gemini.service';
 import { DatabaseModule } from '../../database/database.module';
+import { CreditModule } from '../credit/credit.module';
 
 @Module({
   imports: [
     DatabaseModule,
+    CreditModule,
     // TODO: Enable Bull queue when implementing US3 (AI processing)
     // BullModule.forRootAsync({
     //   imports: [ConfigModule],

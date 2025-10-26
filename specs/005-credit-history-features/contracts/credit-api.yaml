@@ -1,0 +1,287 @@
+openapi: 3.0.3
+info:
+  title: Credit System API
+  description: API endpoints for managing user credit balance and transaction history
+  version: 1.0.0
+  contact:
+    name: Virtual Try-On Team
+
+servers:
+  - url: http://localhost:3000/api
+    description: Local development server
+  - url: https://api.virtual-tryon.com/api
+    description: Production server
+
+tags:
+  - name: Credit
+    description: Credit balance and transaction management
+
+security:
+  - BearerAuth: []
+
+paths:
+  /credit/balance:
+    get:
+      tags:
+        - Credit
+      summary: Get current credit balance
+      description: Returns the current credit balance and statistics for the authenticated user
+      operationId: getCreditBalance
+      responses:
+        '200':
+          description: Credit balance retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    $ref: '#/components/schemas/CreditBalanceResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /credit/transactions:
+    get:
+      tags:
+        - Credit
+      summary: Get credit transaction history
+      description: Returns paginated list of credit transactions for the authenticated user
+      operationId: getCreditTransactions
+      parameters:
+        - name: cursor
+          in: query
+          description: Cursor for pagination (transaction ID)
+          required: false
+          schema:
+            type: string
+            format: uuid
+        - name: limit
+          in: query
+          description: Number of transactions to return (max 100)
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+        - name: type
+          in: query
+          description: Filter by transaction type
+          required: false
+          schema:
+            type: string
+            enum: [INITIAL_GRANT, DEDUCT, REFUND, ADMIN_ADJUSTMENT]
+      responses:
+        '200':
+          description: Transactions retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: object
+                    properties:
+                      items:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/CreditTransaction'
+                      nextCursor:
+                        type: string
+                        format: uuid
+                        nullable: true
+                      hasMore:
+                        type: boolean
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+components:
+  schemas:
+    CreditBalanceResponse:
+      type: object
+      required:
+        - creditBalance
+        - totalCreditsSpent
+        - totalCreditsEarned
+        - creditUpdatedAt
+      properties:
+        creditBalance:
+          type: integer
+          description: Current available credit balance
+          example: 85
+          minimum: 0
+        totalCreditsSpent:
+          type: integer
+          description: Total credits spent (lifetime)
+          example: 150
+          minimum: 0
+        totalCreditsEarned:
+          type: integer
+          description: Total credits earned (lifetime)
+          example: 235
+          minimum: 0
+        creditUpdatedAt:
+          type: string
+          format: date-time
+          description: Last time credit balance was updated
+          example: '2025-10-25T10:30:00Z'
+
+    CreditTransaction:
+      type: object
+      required:
+        - id
+        - userId
+        - type
+        - amount
+        - balanceBefore
+        - balanceAfter
+        - description
+        - createdAt
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Unique transaction ID
+          example: 'a1b2c3d4-e5f6-7890-abcd-ef1234567890'
+        userId:
+          type: string
+          format: uuid
+          description: User ID
+          example: 'u1b2c3d4-e5f6-7890-abcd-ef1234567890'
+        type:
+          type: string
+          enum:
+            - INITIAL_GRANT
+            - DEDUCT
+            - REFUND
+            - ADMIN_ADJUSTMENT
+          description: Transaction type
+          example: DEDUCT
+        amount:
+          type: integer
+          description: Transaction amount (positive for credit, negative for debit)
+          example: -10
+        balanceBefore:
+          type: integer
+          description: Credit balance before transaction
+          example: 95
+          minimum: 0
+        balanceAfter:
+          type: integer
+          description: Credit balance after transaction
+          example: 85
+          minimum: 0
+        sessionId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Related processing session ID (if applicable)
+          example: 's1b2c3d4-e5f6-7890-abcd-ef1234567890'
+        description:
+          type: string
+          description: Human-readable transaction description
+          example: 'Virtual try-on processing'
+          maxLength: 500
+        metadata:
+          type: object
+          nullable: true
+          description: Additional metadata (error details, admin notes, etc.)
+          additionalProperties: true
+          example:
+            originalTransactionId: 'tx123'
+            reason: 'Processing failed - AI service timeout'
+        createdAt:
+          type: string
+          format: date-time
+          description: Transaction creation timestamp
+          example: '2025-10-25T10:30:00Z'
+
+    ErrorResponse:
+      type: object
+      required:
+        - success
+        - error
+      properties:
+        success:
+          type: boolean
+          example: false
+        error:
+          type: object
+          required:
+            - code
+            - message
+          properties:
+            code:
+              type: string
+              description: Error code for programmatic handling
+              example: 'INSUFFICIENT_CREDIT'
+            message:
+              type: string
+              description: Human-readable error message
+              example: 'Insufficient credit balance to complete this operation'
+            details:
+              type: object
+              description: Additional error details
+              nullable: true
+              additionalProperties: true
+              example:
+                required: 10
+                available: 5
+
+  responses:
+    BadRequest:
+      description: Invalid request parameters
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            success: false
+            error:
+              code: 'INVALID_PARAMETERS'
+              message: 'Invalid query parameters'
+              details:
+                limit: 'Must be between 1 and 100'
+
+    Unauthorized:
+      description: Unauthorized - Missing or invalid authentication token
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            success: false
+            error:
+              code: 'UNAUTHORIZED'
+              message: 'Authentication token is missing or invalid'
+
+    InternalError:
+      description: Internal server error
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            success: false
+            error:
+              code: 'INTERNAL_ERROR'
+              message: 'An unexpected error occurred'
+
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: JWT access token obtained from /api/auth/login

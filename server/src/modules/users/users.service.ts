@@ -28,11 +28,29 @@ export class UsersService {
       hashedPassword = await bcrypt.hash(createUserDto.password, 10);
     }
 
-    const user = await this.prisma.user.create({
-      data: {
-        ...createUserDto,
-        password: hashedPassword,
-      },
+    // Create user and initial credit transaction in a transaction
+    const user = await this.prisma.$transaction(async (tx) => {
+      // Create user
+      const newUser = await tx.user.create({
+        data: {
+          ...createUserDto,
+          password: hashedPassword,
+        },
+      });
+
+      // Create initial credit transaction
+      await tx.creditTransaction.create({
+        data: {
+          userId: newUser.id,
+          type: 'INITIAL_GRANT',
+          amount: 100,
+          balanceBefore: 0,
+          balanceAfter: 100,
+          description: 'Welcome! Initial credit grant',
+        },
+      });
+
+      return newUser;
     });
 
     return new UserEntity(user);

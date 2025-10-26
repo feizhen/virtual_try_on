@@ -1,0 +1,84 @@
+.credit-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border-radius: 20px;
+  color: white;
+  font-weight: 600;
+  box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
+  transition: all 0.3s ease;
+  cursor: help;
+  user-select: none;
+}
+
+.credit-badge:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+}
+
+.credit-icon {
+  font-size: 18px;
+  line-height: 1;
+}
+
+.credit-amount {
+  font-size: 20px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+}
+
+.credit-label {
+  font-size: 12px;
+  text-transform: uppercase;
+  opacity: 0.9;
+  letter-spacing: 0.5px;
+}
+
+.credit-badge-low {
+  background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+  animation: pulse-low 2s ease-in-out infinite;
+}
+
+.credit-badge-loading {
+  background: linear-gradient(135deg, #a8a8a8 0%, #7a7a7a 100%);
+  opacity: 0.7;
+}
+
+.credit-badge-error {
+  background: linear-gradient(135deg, #ff6b6b 0%, #c92a2a 100%);
+}
+
+.credit-text {
+  font-size: 14px;
+}
+
+@keyframes pulse-low {
+  0%, 100% {
+    box-shadow: 0 2px 8px rgba(245, 87, 108, 0.3);
+  }
+  50% {
+    box-shadow: 0 4px 16px rgba(245, 87, 108, 0.6);
+  }
+}
+
+/* 响应式设计 */
+@media (max-width: 768px) {
+  .credit-badge {
+    padding: 6px 12px;
+    gap: 6px;
+  }
+
+  .credit-icon {
+    font-size: 16px;
+  }
+
+  .credit-amount {
+    font-size: 18px;
+  }
+
+  .credit-label {
+    font-size: 10px;
+  }
+}

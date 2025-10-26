@@ -2,6 +2,7 @@ import { Injectable, Logger, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../../database/prisma.service';
 import { StorageService } from './storage/storage.service';
 import { GeminiService } from './gemini/gemini.service';
+import { CreditService } from '../credit/credit.service';
 import { randomUUID } from 'crypto';
 import { join } from 'path';
 
@@ -14,11 +15,13 @@ export class OutfitChangeService {
     'image/png',
     'image/webp',
   ];
+  private readonly CREDITS_PER_TRYON = 10;
 
   constructor(
     private prisma: PrismaService,
     private storageService: StorageService,
     private geminiService: GeminiService,
+    private creditService: CreditService,
   ) {}
 
   /**
@@ -194,24 +197,62 @@ export class OutfitChangeService {
       );
     }
 
-    // Create processing session
-    const session = await this.prisma.processingSession.create({
-      data: {
-        userId,
-        modelPhotoId,
-        clothingItemId,
-        status: 'processing',
-      },
-    });
+    // Check if user has enough credits
+    const hasEnoughCredits = await this.creditService.hasEnoughCredits(
+      userId,
+      this.CREDITS_PER_TRYON,
+    );
 
-    this.logger.log(`Virtual try-on started: session=${session.id}`);
+    if (!hasEnoughCredits) {
+      throw new BadRequestException(
+        `Insufficient credits. You need ${this.CREDITS_PER_TRYON} credits to start virtual try-on.`,
+      );
+    }
 
-    // Process in background (don't await)
-    this.processVirtualTryon(session.id, modelPhoto.imageUrl, clothingItem.imageUrl, seed).catch(
-      (error) => {
-        this.logger.error(`Virtual try-on failed: session=${session.id}`, error);
+    // Deduct credits and create processing session in a transaction
+    const { session, creditTransaction } = await this.prisma.$transaction(
+      async (tx) => {
+        // Create processing session first (without credit transaction ID)
+        const newSession = await tx.processingSession.create({
+          data: {
+            userId,
+            modelPhotoId,
+            clothingItemId,
+            status: 'processing',
+          },
+        });
+
+        // Deduct credits using CreditService (which has its own transaction)
+        const transaction = await this.creditService.deductCredits(
+          userId,
+          this.CREDITS_PER_TRYON,
+          newSession.id,
+          'Virtual try-on processing',
+        );
+
+        // Update session with credit transaction ID
+        await tx.processingSession.update({
+          where: { id: newSession.id },
+          data: { creditTransactionId: transaction.id },
+        });
+
+        return { session: newSession, creditTransaction: transaction };
       },
     );
+
+    this.logger.log(
+      `Virtual try-on started: session=${session.id}, credits deducted=${this.CREDITS_PER_TRYON}`,
+    );
+
+    // Process in background (don't await)
+    this.processVirtualTryon(
+      session.id,
+      modelPhoto.imageUrl,
+      clothingItem.imageUrl,
+      seed,
+    ).catch((error) => {
+      this.logger.error(`Virtual try-on failed: session=${session.id}`, error);
+    });
 
     return {
       sessionId: session.id,
@@ -299,6 +340,8 @@ export class OutfitChangeService {
     garmentImageUrl: string,
     seed?: number,
   ) {
+    const startTime = Date.now();
+
     try {
       // Get full file paths
       const modelImagePath = join(process.cwd(), modelImageUrl);
@@ -334,6 +377,8 @@ export class OutfitChangeService {
         throw new Error('Session not found');
       }
 
+      const processingDuration = Date.now() - startTime;
+
       // Create outfit result record
       const outfitResult = await this.prisma.outfitResult.create({
         data: {
@@ -345,7 +390,8 @@ export class OutfitChangeService {
           mimeType: result.mimeType,
           width: 0, // TODO: Get actual dimensions from image
           height: 0,
-          processingDuration: 0, // TODO: Calculate actual duration
+          processingDuration,
+          creditsUsed: this.CREDITS_PER_TRYON,
         },
       });
 
@@ -360,23 +406,118 @@ export class OutfitChangeService {
       });
 
       this.logger.log(
-        `Virtual try-on completed: session=${sessionId}, result=${outfitResult.id}`,
+        `Virtual try-on completed: session=${sessionId}, result=${outfitResult.id}, duration=${processingDuration}ms`,
       );
     } catch (error) {
       this.logger.error(`Virtual try-on failed: session=${sessionId}`, error);
 
-      // Update session with error
-      await this.prisma.processingSession.update({
+      // Get session to refund credits
+      const session = await this.prisma.processingSession.findUnique({
         where: { id: sessionId },
-        data: {
-          status: 'failed',
-          completedAt: new Date(),
-          errorMessage: error.message || 'Unknown error',
-        },
       });
+
+      if (session) {
+        try {
+          // Refund credits on failure
+          const refundTransaction = await this.creditService.refundCredits(
+            session.userId,
+            this.CREDITS_PER_TRYON,
+            sessionId,
+            `Refund for failed processing: ${error.message}`,
+          );
+
+          // Update session with refund transaction ID and error status
+          await this.prisma.processingSession.update({
+            where: { id: sessionId },
+            data: {
+              status: 'failed',
+              completedAt: new Date(),
+              errorMessage: error.message || 'Unknown error',
+              creditRefundTransactionId: refundTransaction.id,
+            },
+          });
+
+          this.logger.log(
+            `Credits refunded for failed session: session=${sessionId}, credits=${this.CREDITS_PER_TRYON}`,
+          );
+        } catch (refundError) {
+          this.logger.error(
+            `Failed to refund credits: session=${sessionId}`,
+            refundError,
+          );
+
+          // Still update session status even if refund fails
+          await this.prisma.processingSession.update({
+            where: { id: sessionId },
+            data: {
+              status: 'failed',
+              completedAt: new Date(),
+              errorMessage: error.message || 'Unknown error',
+            },
+          });
+        }
+      }
 
       throw error;
     }
+  }
+
+  /**
+   * Delete clothing item (soft delete)
+   */
+  async deleteClothingItem(userId: string, clothingItemId: string) {
+    const clothingItem = await this.prisma.clothingItem.findFirst({
+      where: {
+        id: clothingItemId,
+        userId,
+        deletedAt: null,
+      },
+    });
+
+    if (!clothingItem) {
+      throw new BadRequestException('Clothing item not found');
+    }
+
+    await this.prisma.clothingItem.update({
+      where: { id: clothingItemId },
+      data: {
+        deletedAt: new Date(),
+      },
+    });
+
+    return {
+      id: clothingItemId,
+      message: 'Clothing item deleted successfully',
+    };
+  }
+
+  /**
+   * Delete model photo (soft delete)
+   */
+  async deleteModelPhoto(userId: string, modelPhotoId: string) {
+    const modelPhoto = await this.prisma.modelPhoto.findFirst({
+      where: {
+        id: modelPhotoId,
+        userId,
+        deletedAt: null,
+      },
+    });
+
+    if (!modelPhoto) {
+      throw new BadRequestException('Model photo not found');
+    }
+
+    await this.prisma.modelPhoto.update({
+      where: { id: modelPhotoId },
+      data: {
+        deletedAt: new Date(),
+      },
+    });
+
+    return {
+      id: modelPhotoId,
+      message: 'Model photo deleted successfully',
+    };
   }
 
   /**
@@ -391,8 +532,8 @@ export class OutfitChangeService {
     }
 
     // Check MIME type using magic number
-    const { fileTypeFromBuffer } = await import('file-type');
-    const type = await fileTypeFromBuffer(buffer);
+    const fileType = await import('file-type');
+    const type = await fileType.fromBuffer(buffer);
     if (!type || !this.ALLOWED_MIME_TYPES.includes(type.mime)) {
       throw new BadRequestException(
         `Invalid file type. Allowed types: JPEG, PNG, WebP. Detected: ${type?.mime || 'unknown'}`,

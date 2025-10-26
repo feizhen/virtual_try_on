@@ -1,0 +1,196 @@
+.credit-history {
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  padding: 24px;
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+.credit-history-header {
+  margin-bottom: 24px;
+  border-bottom: 2px solid #f0f0f0;
+  padding-bottom: 16px;
+}
+
+.credit-history-header h3 {
+  margin: 0 0 8px 0;
+  font-size: 24px;
+  font-weight: 700;
+  color: #333;
+}
+
+.credit-history-subtitle {
+  margin: 0;
+  font-size: 14px;
+  color: #666;
+}
+
+.credit-history-loading,
+.credit-history-empty,
+.credit-history-error {
+  text-align: center;
+  padding: 48px 24px;
+  color: #666;
+}
+
+.credit-history-error {
+  color: #c92a2a;
+}
+
+.credit-history-error .error-detail {
+  font-size: 14px;
+  margin-top: 8px;
+  opacity: 0.7;
+}
+
+.spinner {
+  width: 40px;
+  height: 40px;
+  margin: 0 auto 16px;
+  border: 4px solid #f0f0f0;
+  border-top: 4px solid #667eea;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.transaction-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.transaction-item {
+  display: flex;
+  gap: 16px;
+  padding: 16px;
+  background: #f8f9fa;
+  border-radius: 8px;
+  transition: all 0.2s ease;
+}
+
+.transaction-item:hover {
+  background: #e9ecef;
+  transform: translateX(4px);
+}
+
+.transaction-icon {
+  font-size: 32px;
+  line-height: 1;
+  flex-shrink: 0;
+}
+
+.transaction-details {
+  flex: 1;
+  min-width: 0;
+}
+
+.transaction-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 6px;
+}
+
+.transaction-type {
+  font-weight: 600;
+  font-size: 16px;
+  color: #333;
+}
+
+.transaction-amount {
+  font-weight: 700;
+  font-size: 18px;
+}
+
+.transaction-amount.positive {
+  color: #37b24d;
+}
+
+.transaction-amount.negative {
+  color: #f03e3e;
+}
+
+.transaction-description {
+  font-size: 14px;
+  color: #666;
+  margin-bottom: 8px;
+  word-wrap: break-word;
+}
+
+.transaction-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 12px;
+  color: #868e96;
+}
+
+.transaction-date {
+  opacity: 0.8;
+}
+
+.transaction-balance {
+  font-family: 'Courier New', monospace;
+  background: #fff;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 11px;
+}
+
+.credit-history-footer {
+  margin-top: 24px;
+  text-align: center;
+}
+
+.btn-load-more {
+  padding: 12px 32px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.btn-load-more:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+}
+
+.btn-load-more:active {
+  transform: translateY(0);
+}
+
+/* 响应式设计 */
+@media (max-width: 768px) {
+  .credit-history {
+    padding: 16px;
+  }
+
+  .transaction-item {
+    padding: 12px;
+    gap: 12px;
+  }
+
+  .transaction-icon {
+    font-size: 24px;
+  }
+
+  .transaction-footer {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 6px;
+  }
+
+  .transaction-balance {
+    align-self: flex-start;
+  }
+}

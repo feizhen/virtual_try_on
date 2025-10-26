@@ -12,6 +12,10 @@ export class UserEntity implements Omit<PrismaUser, 'password'> {
   createdAt: Date;
   updatedAt: Date;
   lastLoginAt: Date | null;
+  creditBalance: number;
+  totalCreditsSpent: number;
+  totalCreditsEarned: number;
+  creditUpdatedAt: Date;
 
   constructor(partial: Partial<PrismaUser>) {
     Object.assign(this, partial);

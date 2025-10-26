@@ -13,6 +13,7 @@ import { TransformInterceptor } from './common/interceptors/transform.intercepto
 import { LoggingInterceptor } from './common/interceptors/logging.interceptor';
 import { ValidationPipe } from './common/pipes/validation.pipe';
 import { OutfitChangeModule } from './modules/outfit-change/outfit-change.module';
+import { CreditModule } from './modules/credit/credit.module';
 
 @Module({
   imports: [
@@ -27,6 +28,7 @@ import { OutfitChangeModule } from './modules/outfit-change/outfit-change.module
     UsersModule,
     HealthModule,
     OutfitChangeModule,
+    CreditModule,
   ],
   providers: [
     {
