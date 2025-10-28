@@ -1,0 +1,128 @@
+.sidebar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  height: 100vh;
+  background-color: var(--sidebar-bg);
+  border-right: 1px solid var(--sidebar-border);
+  display: flex;
+  flex-direction: column;
+  z-index: var(--z-sidebar);
+  transition: transform var(--sidebar-transition),
+    width var(--sidebar-transition);
+  overflow: hidden;
+}
+
+/* Desktop sidebar */
+.sidebar--desktop {
+  width: var(--sidebar-width-expanded);
+  transform: translateX(0);
+}
+
+.sidebar--desktop.sidebar--collapsed {
+  width: var(--sidebar-width-collapsed);
+}
+
+/* Mobile sidebar */
+.sidebar--mobile {
+  width: 100%;
+  max-width: 320px;
+  transform: translateX(-100%);
+  box-shadow: var(--shadow-lg);
+}
+
+.sidebar--mobile.sidebar--open {
+  transform: translateX(0);
+}
+
+/* Sidebar header */
+.sidebar__header {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 1rem 0.75rem;
+  border-bottom: 1px solid var(--border-color);
+  flex-shrink: 0;
+}
+
+.sidebar--collapsed .sidebar__header {
+  justify-content: center;
+  padding: 1rem 0.5rem;
+}
+
+.sidebar__title {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.sidebar--collapsed .sidebar__title {
+  display: none;
+}
+
+/* Mobile toggle button (rendered by AppLayout) */
+.sidebar-toggle--mobile {
+  display: none;
+}
+
+@media (max-width: 767px) {
+  .sidebar-toggle--mobile {
+    display: flex;
+  }
+
+  .sidebar--mobile .sidebar__header {
+    padding: 1rem;
+  }
+}
+
+/* Sidebar footer */
+.sidebar__footer {
+  border-top: 1px solid var(--border-color);
+  padding: 0.75rem;
+  flex-shrink: 0;
+}
+
+.sidebar__collapse-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  width: 100%;
+  padding: 0.75rem 1rem;
+  border: none;
+  border-radius: 6px;
+  background-color: transparent;
+  color: var(--text-secondary);
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 150ms ease-in-out;
+}
+
+.sidebar__collapse-btn:hover {
+  background-color: var(--background);
+  color: var(--text-primary);
+}
+
+.sidebar__collapse-btn:focus-visible {
+  outline: 2px solid var(--primary-color);
+  outline-offset: 2px;
+}
+
+.sidebar--collapsed .sidebar__collapse-btn {
+  padding: 0.75rem;
+}
+
+.sidebar__collapse-label {
+  white-space: nowrap;
+}
+
+/* Accessibility */
+.sidebar:focus-visible {
+  outline: 2px solid var(--primary-color);
+  outline-offset: -2px;
+}

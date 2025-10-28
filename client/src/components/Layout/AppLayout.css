@@ -1,0 +1,56 @@
+.app-layout {
+  position: relative;
+  min-height: 100vh;
+  display: flex;
+}
+
+/* Main content area */
+.app-layout__main {
+  flex: 1;
+  min-height: 100vh;
+  background-color: var(--background);
+  transition: margin-left var(--sidebar-transition);
+}
+
+/* Desktop with sidebar */
+.app-layout__main--with-sidebar {
+  margin-left: var(--sidebar-width-expanded);
+}
+
+.app-layout__main--sidebar-collapsed {
+  margin-left: var(--sidebar-width-collapsed);
+}
+
+/* Mobile - no margin (sidebar is overlay) */
+.app-layout__main--mobile {
+  margin-left: 0 !important;
+}
+
+/* Mobile backdrop overlay */
+.app-layout__backdrop {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.5);
+  z-index: var(--z-backdrop);
+  animation: fadeIn 200ms ease-in-out;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* Responsive adjustments */
+@media (max-width: 767px) {
+  .app-layout__main {
+    margin-left: 0;
+    padding-top: 4rem; /* Space for mobile toggle button */
+  }
+}
