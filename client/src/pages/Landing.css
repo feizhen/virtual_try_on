@@ -1,0 +1,18 @@
+.landing-page {
+  min-height: 100vh;
+  background: white;
+}
+
+/* 全局容器样式 */
+.landing-page section {
+  position: relative;
+}
+
+/* 确保 section 使用现有的设计系统样式 */
+.section-header .section-title {
+  color: var(--text-primary, #111827);
+}
+
+.section-header .section-description {
+  color: var(--text-secondary, #6b7280);
+}

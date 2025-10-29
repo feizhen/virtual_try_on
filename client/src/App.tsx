@@ -6,6 +6,7 @@ import { TryOnProvider } from './contexts/TryOnContext';
 import { SidebarProvider } from './contexts/SidebarContext';
 import { ProtectedRoute } from './components/ProtectedRoute';
 import { AppLayout } from './components/Layout';
+import { Landing } from './pages/Landing';
 import { Login } from './pages/Login';
 import { Register } from './pages/Register';
 import { Home } from './pages/Home';
@@ -30,6 +31,7 @@ function App() {
               <SidebarProvider>
                 <Routes>
                   {/* Public routes without sidebar */}
+                  <Route path="/" element={<Landing />} />
                   <Route path="/login" element={<Login />} />
                   <Route path="/register" element={<Register />} />
 
@@ -40,7 +42,7 @@ function App() {
                       <ProtectedRoute>
                         <AppLayout>
                           <Routes>
-                            <Route path="/" element={<Home />} />
+                            <Route path="/home" element={<Home />} />
                             <Route path="/tryon" element={<VirtualTryOn />} />
                             <Route path="/history" element={<History />} />
                             <Route path="*" element={<Navigate to="/" replace />} />
