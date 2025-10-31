@@ -7,6 +7,9 @@ import { StorageService } from './storage/storage.service';
 import { GeminiService } from './gemini/gemini.service';
 import { DatabaseModule } from '../../database/database.module';
 import { CreditModule } from '../credit/credit.module';
+import { LocalStorageProvider } from './storage/providers/local-storage.provider';
+import { TosStorageProvider } from './storage/providers/tos-storage.provider';
+import { StorageFactory } from './storage/storage.factory';
 
 @Module({
   imports: [
@@ -32,9 +35,12 @@ import { CreditModule } from '../credit/credit.module';
     OutfitChangeService,
     StorageService,
     GeminiService,
+    LocalStorageProvider,
+    TosStorageProvider,
+    StorageFactory,
     // TODO: Enable OutfitProcessor when implementing US3 (AI processing)
     // OutfitProcessor,
   ],
-  exports: [OutfitChangeService],
+  exports: [OutfitChangeService, StorageService],
 })
 export class OutfitChangeModule {}

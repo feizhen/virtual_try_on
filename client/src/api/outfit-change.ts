@@ -83,6 +83,53 @@ export const outfitChangeApi = {
   },
 
   /**
+   * Replace a model photo with a new one
+   */
+  async replaceModelPhoto(
+    modelPhotoId: string,
+    request: UploadModelPhotoRequest,
+    onProgress?: (progress: UploadProgress) => void,
+  ): Promise<ModelPhoto> {
+    const formData = new FormData();
+    formData.append('file', request.file);
+
+    if (request.width !== undefined) {
+      formData.append('width', request.width.toString());
+    }
+    if (request.height !== undefined) {
+      formData.append('height', request.height.toString());
+    }
+
+    const response = await apiClient.put<UploadModelPhotoResponse>(
+      `/outfit-change/models/${modelPhotoId}/replace`,
+      formData,
+      {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+        onUploadProgress: (progressEvent) => {
+          if (onProgress && progressEvent.total) {
+            const percentage = Math.round(
+              (progressEvent.loaded * 100) / progressEvent.total,
+            );
+            onProgress({
+              loaded: progressEvent.loaded,
+              total: progressEvent.total,
+              percentage,
+            });
+          }
+        },
+      },
+    );
+
+    console.log('[API] Replace model photo response:', response);
+    const result = response.data.data.data || response.data.data;
+    console.log('[API] Replace result:', result);
+
+    return result;
+  },
+
+  /**
    * Upload a clothing item photo
    */
   async uploadClothingItem(

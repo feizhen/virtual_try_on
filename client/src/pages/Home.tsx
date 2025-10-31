@@ -4,6 +4,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { CreditBadge } from '../components/Credit/CreditBadge';
 import { ModelUpload } from '../components/ModelUpload';
 import { ClothingUpload } from '../components/ClothingUpload';
+import { ModelPhotoCard } from '../components/ModelPhotoCard';
 import { outfitChangeApi } from '../api/outfit-change';
 import type { ModelPhoto, ClothingItem, ProcessingSession } from '../types/outfit-change';
 import './Home.css';
@@ -43,6 +44,16 @@ export const Home = () => {
       // Ensure prev is always an array
       const prevArray = Array.isArray(prev) ? prev : [];
       return [clothing, ...prevArray];
+    });
+  };
+
+  const handleModelPhotoUpdated = (updatedPhoto: ModelPhoto) => {
+    setUploadedPhotos((prev) => {
+      const prevArray = Array.isArray(prev) ? prev : [];
+      // Replace the old photo with the updated one
+      return prevArray.map((photo) =>
+        photo.id === updatedPhoto.id ? updatedPhoto : photo
+      );
     });
   };
 
@@ -180,6 +191,12 @@ export const Home = () => {
           <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
             <CreditBadge />
             <button
+              onClick={() => navigate('/history')}
+              className="btn btn-secondary"
+            >
+              历史记录
+            </button>
+            <button
               onClick={() => navigate('/tryon')}
               className="btn btn-primary"
             >
@@ -206,33 +223,13 @@ export const Home = () => {
               {uploadedPhotos.length > 0 ? (
                 <div className="sidebar-list">
                   {uploadedPhotos.map((photo) => (
-                    <div
+                    <ModelPhotoCard
                       key={photo.id}
-                      className={`sidebar-card ${selectedModelId === photo.id ? 'selected' : ''}`}
+                      photo={photo}
+                      isSelected={selectedModelId === photo.id}
                       onClick={() => setSelectedModelId(photo.id)}
-                    >
-                      <img
-                        src={`${import.meta.env.VITE_API_URL || 'http://localhost:3000'}${photo.url}`}
-                        alt={photo.originalFileName || 'Model photo'}
-                        className="sidebar-thumbnail"
-                      />
-                      <div className="sidebar-info">
-                        <p className="sidebar-filename">
-                          {photo.originalFileName || 'Unknown'}
-                        </p>
-                        <p className="sidebar-date">
-                          {new Date(photo.uploadedAt).toLocaleString('zh-CN', {
-                            month: '2-digit',
-                            day: '2-digit',
-                            hour: '2-digit',
-                            minute: '2-digit',
-                          })}
-                        </p>
-                      </div>
-                      {selectedModelId === photo.id && (
-                        <div className="selected-badge">已选择</div>
-                      )}
-                    </div>
+                      onPhotoUpdated={handleModelPhotoUpdated}
+                    />
                   ))}
                 </div>
               ) : (

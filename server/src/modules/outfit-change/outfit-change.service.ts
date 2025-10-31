@@ -4,7 +4,6 @@ import { StorageService } from './storage/storage.service';
 import { GeminiService } from './gemini/gemini.service';
 import { CreditService } from '../credit/credit.service';
 import { randomUUID } from 'crypto';
-import { join } from 'path';
 
 @Injectable()
 export class OutfitChangeService {
@@ -40,32 +39,41 @@ export class OutfitChangeService {
     const fileExtension = file.mimetype.split('/')[1];
     const filename = `${randomUUID()}.${fileExtension}`;
 
-    // Save file to local storage
-    const filePath = await this.storageService.saveFile(
+    // Save file using configured storage provider
+    const storageUrl = await this.storageService.saveFile(
       file.buffer,
       'models',
       filename,
     );
 
-    // Create database record
+    // Determine storage type and keys
+    const storageType = this.storageService.getStorageType();
+    const isTos = storageType === 'tos';
+
+    // Create database record with storage information
     const modelPhoto = await this.prisma.modelPhoto.create({
       data: {
         userId,
-        imageUrl: filePath,
+        imageUrl: isTos ? `models/${filename}` : storageUrl,
         originalFileName: file.originalname,
         fileSize: file.size,
         mimeType: file.mimetype,
         width: width || 0,
         height: height || 0,
+        storageType,
+        tosKey: isTos ? `models/${filename}` : null,
+        cdnUrl: isTos ? storageUrl : null,
       },
     });
 
     this.logger.log(`Model photo uploaded: ${modelPhoto.id}`);
 
-    // Add file URL to response
+    // Add file URL to response (use CDN URL if available, otherwise construct from imageUrl)
+    const displayUrl = modelPhoto.cdnUrl || this.storageService.getFileUrl(modelPhoto.imageUrl);
+
     return {
       ...modelPhoto,
-      url: this.storageService.getFileUrl(modelPhoto.imageUrl),
+      url: displayUrl,
     };
   }
 
@@ -83,10 +91,10 @@ export class OutfitChangeService {
       },
     });
 
-    // Add file URLs
+    // Add file URLs (use CDN URL if available, otherwise construct from imageUrl)
     return photos.map((photo) => ({
       ...photo,
-      url: this.storageService.getFileUrl(photo.imageUrl),
+      url: photo.cdnUrl || this.storageService.getFileUrl(photo.imageUrl),
     }));
   }
 
@@ -106,32 +114,41 @@ export class OutfitChangeService {
     const fileExtension = file.mimetype.split('/')[1];
     const filename = `${randomUUID()}.${fileExtension}`;
 
-    // Save file to local storage (in clothing subdirectory)
-    const filePath = await this.storageService.saveFile(
+    // Save file using configured storage provider
+    const storageUrl = await this.storageService.saveFile(
       file.buffer,
       'clothing',
       filename,
     );
 
-    // Create database record
+    // Determine storage type and keys
+    const storageType = this.storageService.getStorageType();
+    const isTos = storageType === 'tos';
+
+    // Create database record with storage information
     const clothingItem = await this.prisma.clothingItem.create({
       data: {
         userId,
-        imageUrl: filePath,
+        imageUrl: isTos ? `clothing/${filename}` : storageUrl,
         originalFileName: file.originalname,
         fileSize: file.size,
         mimeType: file.mimetype,
         width: width || 0,
         height: height || 0,
+        storageType,
+        tosKey: isTos ? `clothing/${filename}` : null,
+        cdnUrl: isTos ? storageUrl : null,
       },
     });
 
     this.logger.log(`Clothing item uploaded: ${clothingItem.id}`);
 
-    // Add file URL to response
+    // Add file URL to response (use CDN URL if available, otherwise construct from imageUrl)
+    const displayUrl = clothingItem.cdnUrl || this.storageService.getFileUrl(clothingItem.imageUrl);
+
     return {
       ...clothingItem,
-      url: this.storageService.getFileUrl(clothingItem.imageUrl),
+      url: displayUrl,
     };
   }
 
@@ -149,10 +166,10 @@ export class OutfitChangeService {
       },
     });
 
-    // Add file URLs
+    // Add file URLs (use CDN URL if available, otherwise construct from imageUrl)
     return items.map((item) => ({
       ...item,
-      url: this.storageService.getFileUrl(item.imageUrl),
+      url: item.cdnUrl || this.storageService.getFileUrl(item.imageUrl),
     }));
   }
 
@@ -164,6 +181,8 @@ export class OutfitChangeService {
     modelPhotoId: string,
     clothingItemId: string,
     seed?: number,
+    isRetry?: boolean,
+    retryFromId?: string,
   ) {
     // Validate that both model photo and clothing item exist and belong to user
     const modelPhoto = await this.prisma.modelPhoto.findFirst({
@@ -250,6 +269,8 @@ export class OutfitChangeService {
       modelPhoto.imageUrl,
       clothingItem.imageUrl,
       seed,
+      isRetry,
+      retryFromId,
     ).catch((error) => {
       this.logger.error(`Virtual try-on failed: session=${session.id}`, error);
     });
@@ -292,7 +313,7 @@ export class OutfitChangeService {
     if (session.result) {
       response.result = {
         ...session.result,
-        url: this.storageService.getFileUrl(session.result.resultImageUrl),
+        url: session.result.cdnUrl || this.storageService.getFileUrl(session.result.resultImageUrl),
       };
     }
 
@@ -319,14 +340,14 @@ export class OutfitChangeService {
 
     return results.map((result) => ({
       ...result,
-      url: this.storageService.getFileUrl(result.resultImageUrl),
+      url: result.cdnUrl || this.storageService.getFileUrl(result.resultImageUrl),
       modelPhoto: {
         ...result.modelPhoto,
-        url: this.storageService.getFileUrl(result.modelPhoto.imageUrl),
+        url: result.modelPhoto.cdnUrl || this.storageService.getFileUrl(result.modelPhoto.imageUrl),
       },
       clothingItem: {
         ...result.clothingItem,
-        url: this.storageService.getFileUrl(result.clothingItem.imageUrl),
+        url: result.clothingItem.cdnUrl || this.storageService.getFileUrl(result.clothingItem.imageUrl),
       },
     }));
   }
@@ -336,33 +357,41 @@ export class OutfitChangeService {
    */
   private async processVirtualTryon(
     sessionId: string,
-    modelImageUrl: string,
-    garmentImageUrl: string,
+    modelImageKey: string,
+    garmentImageKey: string,
     seed?: number,
+    isRetry?: boolean,
+    retryFromId?: string,
   ) {
     const startTime = Date.now();
 
     try {
-      // Get full file paths
-      const modelImagePath = join(process.cwd(), modelImageUrl);
-      const garmentImagePath = join(process.cwd(), garmentImageUrl);
-
       this.logger.log(
-        `Processing virtual try-on: session=${sessionId}, model=${modelImagePath}, garment=${garmentImagePath}`,
+        `Processing virtual try-on: session=${sessionId}, model=${modelImageKey}, garment=${garmentImageKey}`,
       );
 
-      // Call Gemini API
+      // Get file buffers from storage (works with both local and TOS)
+      const [modelImageBuffer, garmentImageBuffer] = await Promise.all([
+        this.storageService.getFileBuffer(modelImageKey),
+        this.storageService.getFileBuffer(garmentImageKey),
+      ]);
+
+      this.logger.log(
+        `Files loaded: model size=${modelImageBuffer.length}, garment size=${garmentImageBuffer.length}`,
+      );
+
+      // Call Gemini API with buffers
       const result = await this.geminiService.virtualTryon({
-        modelImagePath,
-        garmentImagePath,
+        modelImageBuffer,
+        garmentImageBuffer,
         seed,
       });
 
       // Generate unique filename for result
       const filename = `${randomUUID()}.png`;
 
-      // Save result image
-      const resultPath = await this.storageService.saveFile(
+      // Save result image using configured storage provider
+      const storageUrl = await this.storageService.saveFile(
         result.imageBuffer,
         'results',
         filename,
@@ -379,19 +408,28 @@ export class OutfitChangeService {
 
       const processingDuration = Date.now() - startTime;
 
-      // Create outfit result record
+      // Determine storage type and keys
+      const storageType = this.storageService.getStorageType();
+      const isTos = storageType === 'tos';
+
+      // Create outfit result record with storage information
       const outfitResult = await this.prisma.outfitResult.create({
         data: {
           userId: session.userId,
           modelPhotoId: session.modelPhotoId,
           clothingItemId: session.clothingItemId,
-          resultImageUrl: resultPath,
+          resultImageUrl: isTos ? `results/${filename}` : storageUrl,
           fileSize: result.imageBuffer.length,
           mimeType: result.mimeType,
           width: 0, // TODO: Get actual dimensions from image
           height: 0,
           processingDuration,
           creditsUsed: this.CREDITS_PER_TRYON,
+          isRetry: isRetry || false,
+          retryFromId: retryFromId || null,
+          storageType,
+          tosKey: isTos ? `results/${filename}` : null,
+          cdnUrl: isTos ? storageUrl : null,
         },
       });
 
@@ -517,6 +555,155 @@ export class OutfitChangeService {
     return {
       id: modelPhotoId,
       message: 'Model photo deleted successfully',
+    };
+  }
+
+  /**
+   * Replace model photo with a new one
+   */
+  async replaceModelPhoto(
+    userId: string,
+    modelPhotoId: string,
+    file: Express.Multer.File,
+    width?: number,
+    height?: number,
+  ) {
+    // Find the existing model photo
+    const existingPhoto = await this.prisma.modelPhoto.findFirst({
+      where: {
+        id: modelPhotoId,
+        userId,
+        deletedAt: null,
+      },
+    });
+
+    if (!existingPhoto) {
+      throw new BadRequestException('Model photo not found');
+    }
+
+    // Validate new file
+    await this.validateFile(file.buffer);
+
+    // Check if the old photo is referenced by any history records
+    const historyCount = await this.prisma.outfitResult.count({
+      where: {
+        modelPhotoId: modelPhotoId,
+        deletedAt: null,
+      },
+    });
+
+    const isReferenced = historyCount > 0;
+
+    this.logger.log(
+      `Replacing model photo ${modelPhotoId}, isReferenced: ${isReferenced}, historyCount: ${historyCount}`,
+    );
+
+    // Generate unique filename for new photo
+    const fileExtension = file.mimetype.split('/')[1];
+    const filename = `${randomUUID()}.${fileExtension}`;
+
+    // Save new file to local storage
+    const newFilePath = await this.storageService.saveFile(
+      file.buffer,
+      'models',
+      filename,
+    );
+
+    // Prepare replacement history entry
+    const replacementEntry = {
+      timestamp: new Date().toISOString(),
+      oldImageUrl: existingPhoto.imageUrl,
+      oldVersion: existingPhoto.version,
+      reason: 'User replacement',
+    };
+
+    const existingHistory = (existingPhoto.replacementHistory as any[]) || [];
+    const updatedHistory = [...existingHistory, replacementEntry];
+
+    let result;
+
+    if (isReferenced) {
+      // If referenced by history, archive old record and create new one
+      this.logger.log(
+        `Old photo is referenced, archiving old record and creating new one`,
+      );
+
+      result = await this.prisma.$transaction(async (tx) => {
+        // Archive old photo
+        await tx.modelPhoto.update({
+          where: { id: modelPhotoId },
+          data: {
+            isArchived: true,
+          },
+        });
+
+        // Create new photo record
+        const newPhoto = await tx.modelPhoto.create({
+          data: {
+            userId,
+            imageUrl: newFilePath,
+            originalFileName: file.originalname,
+            fileSize: file.size,
+            mimeType: file.mimetype,
+            width: width || 0,
+            height: height || 0,
+            version: existingPhoto.version + 1,
+            replacementHistory: updatedHistory,
+          },
+        });
+
+        return newPhoto;
+      });
+
+      this.logger.log(
+        `Old photo archived, new photo created: ${result.id}, old file preserved`,
+      );
+    } else {
+      // If not referenced, delete old file and update record
+      this.logger.log(
+        `Old photo not referenced, deleting old file and updating record`,
+      );
+
+      result = await this.prisma.$transaction(async (tx) => {
+        // Delete old file
+        try {
+          await this.storageService.deleteFile(existingPhoto.imageUrl);
+          this.logger.log(`Old file deleted: ${existingPhoto.imageUrl}`);
+        } catch (error) {
+          this.logger.warn(
+            `Failed to delete old file: ${existingPhoto.imageUrl}`,
+            error,
+          );
+          // Continue even if file deletion fails
+        }
+
+        // Update record with new file
+        const updatedPhoto = await tx.modelPhoto.update({
+          where: { id: modelPhotoId },
+          data: {
+            imageUrl: newFilePath,
+            originalFileName: file.originalname,
+            fileSize: file.size,
+            mimeType: file.mimetype,
+            width: width || 0,
+            height: height || 0,
+            version: existingPhoto.version + 1,
+            replacementHistory: updatedHistory,
+          },
+        });
+
+        return updatedPhoto;
+      });
+
+      this.logger.log(
+        `Model photo updated: ${result.id}, old file deleted`,
+      );
+    }
+
+    // Add file URL to response
+    return {
+      ...result,
+      url: this.storageService.getFileUrl(result.imageUrl),
     };
   }
 

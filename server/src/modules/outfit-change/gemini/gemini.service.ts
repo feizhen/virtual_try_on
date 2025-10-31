@@ -14,8 +14,10 @@ const VIRTUAL_TRYON_PROMPT = `You are an expert virtual try-on AI. You will be g
 5.  **Output:** Return ONLY the final, edited image. Do not include any text.`;
 
 export interface GeminiVirtualTryonOptions {
-  modelImagePath: string;
-  garmentImagePath: string;
+  modelImagePath?: string;
+  garmentImagePath?: string;
+  modelImageBuffer?: Buffer;
+  garmentImageBuffer?: Buffer;
   seed?: number;
   timeout?: number;
 }
@@ -62,22 +64,35 @@ export class GeminiService {
 
   /**
    * Perform virtual try-on using Gemini API
+   * Accepts either file paths or buffers
    */
   async virtualTryon(
     options: GeminiVirtualTryonOptions,
   ): Promise<GeminiVirtualTryonResult> {
-    const { modelImagePath, garmentImagePath, seed, timeout } = options;
+    const { modelImagePath, garmentImagePath, modelImageBuffer, garmentImageBuffer, seed, timeout } = options;
 
     this.logger.log(
-      `Starting virtual try-on: model=${modelImagePath}, garment=${garmentImagePath}`,
+      `Starting virtual try-on: model=${modelImagePath || 'buffer'}, garment=${garmentImagePath || 'buffer'}`,
     );
 
     try {
-      // Read images
-      const [modelImage, garmentImage] = await Promise.all([
-        fs.readFile(modelImagePath),
-        fs.readFile(garmentImagePath),
-      ]);
+      // Get images from either path or buffer
+      let modelImage: Buffer;
+      let garmentImage: Buffer;
+
+      if (modelImageBuffer && garmentImageBuffer) {
+        // Use provided buffers
+        modelImage = modelImageBuffer;
+        garmentImage = garmentImageBuffer;
+      } else if (modelImagePath && garmentImagePath) {
+        // Read from file paths
+        [modelImage, garmentImage] = await Promise.all([
+          fs.readFile(modelImagePath),
+          fs.readFile(garmentImagePath),
+        ]);
+      } else {
+        throw new Error('Must provide either image paths or image buffers');
+      }
 
       // Encode images to base64
       const modelBase64 = modelImage.toString('base64');

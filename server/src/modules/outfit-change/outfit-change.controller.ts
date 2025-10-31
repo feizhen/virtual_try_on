@@ -3,6 +3,7 @@ import {
   Post,
   Get,
   Delete,
+  Put,
   UseInterceptors,
   UploadedFile,
   Body,
@@ -209,6 +210,41 @@ export class OutfitChangeController {
     return {
       success: true,
       data: result,
+    };
+  }
+
+  /**
+   * Replace model photo with a new one
+   * PUT /api/outfit-change/models/:id/replace
+   */
+  @Put('models/:id/replace')
+  @UseInterceptors(
+    FileInterceptor('file', {
+      limits: {
+        fileSize: 10 * 1024 * 1024, // 10MB
+      },
+    }),
+  )
+  async replaceModel(
+    @Request() req: any,
+    @Param('id') id: string,
+    @UploadedFile() file: Express.Multer.File,
+    @Body() dto: UploadModelDto,
+  ) {
+    const userId = req.user.sub;
+    this.logger.log(`User ${userId} replacing model photo ${id}`);
+
+    const modelPhoto = await this.outfitChangeService.replaceModelPhoto(
+      userId,
+      id,
+      file,
+      dto.width,
+      dto.height,
+    );
+
+    return {
+      success: true,
+      data: modelPhoto,
     };
   }
 }

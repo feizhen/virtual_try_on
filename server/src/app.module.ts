@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { APP_FILTER, APP_GUARD, APP_INTERCEPTOR, APP_PIPE } from '@nestjs/core';
 import configuration from './config/configuration';
+import tosConfig from './config/tos.config';
 import { validate } from './config/validation';
 import { DatabaseModule } from './database/database.module';
 import { AuthModule } from './modules/auth/auth.module';
@@ -14,12 +15,13 @@ import { LoggingInterceptor } from './common/interceptors/logging.interceptor';
 import { ValidationPipe } from './common/pipes/validation.pipe';
 import { OutfitChangeModule } from './modules/outfit-change/outfit-change.module';
 import { CreditModule } from './modules/credit/credit.module';
+import { HistoryModule } from './modules/history/history.module';
 
 @Module({
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
-      load: [configuration],
+      load: [configuration, tosConfig],
       validate,
       cache: true,
     }),
@@ -29,6 +31,7 @@ import { CreditModule } from './modules/credit/credit.module';
     HealthModule,
     OutfitChangeModule,
     CreditModule,
+    HistoryModule,
   ],
   providers: [
     {

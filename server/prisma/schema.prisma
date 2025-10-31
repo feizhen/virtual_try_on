@@ -85,6 +85,11 @@ model ModelPhoto {
   replacementHistory Json?     @map("replacement_history") @db.JsonB
   isArchived         Boolean   @default(false) @map("is_archived")
 
+  // TOS (Cloud Storage) fields
+  storageType        String    @default("local") @map("storage_type") // 'local' or 'tos'
+  tosKey             String?   @map("tos_key") // TOS file path, e.g., "models/uuid.jpg"
+  cdnUrl             String?   @map("cdn_url") // CDN URL, e.g., "https://cdn.xxx.com/models/uuid.jpg"
+
   // Relations
   user               User                @relation(fields: [userId], references: [id], onDelete: Cascade)
   outfitResults      OutfitResult[]
@@ -93,6 +98,7 @@ model ModelPhoto {
   @@index([userId])
   @@index([deletedAt])
   @@index([uploadedAt(sort: Desc)])
+  @@index([storageType])
   @@map("model_photos")
 }
 
@@ -108,6 +114,11 @@ model ClothingItem {
   uploadedAt       DateTime  @default(now()) @map("uploaded_at")
   deletedAt        DateTime? @map("deleted_at")
 
+  // TOS (Cloud Storage) fields
+  storageType      String    @default("local") @map("storage_type") // 'local' or 'tos'
+  tosKey           String?   @map("tos_key") // TOS file path
+  cdnUrl           String?   @map("cdn_url") // CDN URL
+
   // Relations
   user               User                @relation(fields: [userId], references: [id], onDelete: Cascade)
   outfitResults      OutfitResult[]
@@ -116,6 +127,7 @@ model ClothingItem {
   @@index([userId])
   @@index([deletedAt])
   @@index([uploadedAt(sort: Desc)])
+  @@index([storageType])
   @@map("clothing_items")
 }
 
@@ -138,6 +150,11 @@ model OutfitResult {
   isRetry            Boolean   @default(false) @map("is_retry")
   retryFromId        String?   @map("retry_from_id")
 
+  // TOS (Cloud Storage) fields
+  storageType        String    @default("local") @map("storage_type") // 'local' or 'tos'
+  tosKey             String?   @map("tos_key") // TOS file path
+  cdnUrl             String?   @map("cdn_url") // CDN URL
+
   // Relations
   user               User                @relation(fields: [userId], references: [id], onDelete: Cascade)
   modelPhoto         ModelPhoto          @relation(fields: [modelPhotoId], references: [id])
@@ -154,6 +171,7 @@ model OutfitResult {
   @@index([userId, createdAt(sort: Desc)])
   @@index([userId, deletedAt])
   @@index([retryFromId])
+  @@index([storageType])
   @@map("outfit_results")
 }
 

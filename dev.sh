@@ -21,6 +21,9 @@ if [ ! -d "server" ] || [ ! -d "client" ]; then
   exit 1
 fi
 
+echo -e "${BLUE}⚡ 跳过 Docker 检测,直接启动应用...${NC}"
+echo ""
+
 # 保存前端进程PID的文件
 FRONTEND_PID_FILE="/tmp/vto-frontend.pid"
 

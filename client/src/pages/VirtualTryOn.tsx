@@ -49,6 +49,9 @@ const VirtualTryOn: React.FC = () => {
           <CreditBadge />
 
           {/* Action Buttons */}
+          <button onClick={() => navigate('/history')} className="tryon-navbar-btn tryon-navbar-btn-secondary">
+            历史记录
+          </button>
           <button onClick={() => navigate('/')} className="tryon-navbar-btn tryon-navbar-btn-secondary">
             返回首页
           </button>

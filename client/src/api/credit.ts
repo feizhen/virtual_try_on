@@ -7,7 +7,8 @@ export const creditApi = {
    */
   getBalance: async (): Promise<CreditBalance> => {
     const response = await apiClient.get('/credit/balance');
-    return response.data;
+    // Backend wraps response in { success, data, timestamp, path }
+    return response.data.data;
   },
 
   /**
@@ -24,6 +25,7 @@ export const creditApi = {
     const response = await apiClient.get(
       `/credit/transactions?${params.toString()}`,
     );
-    return response.data;
+    // Backend wraps response in { success, data, timestamp, path }
+    return response.data.data;
   },
 };

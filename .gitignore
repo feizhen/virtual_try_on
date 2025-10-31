@@ -84,3 +84,4 @@ server/logs/
 *.sql
 *.sql.gz
 server/backup*.sql
+server/.env.local-no-docker
